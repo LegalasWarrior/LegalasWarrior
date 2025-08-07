@@ -163,11 +163,13 @@ function startCombat(mon){
 }
 
 function renderCombat(){
+  if (!combat) { renderLocation(); return; }
   const p = state.player; const m = combat.mon;
   const text = `Враг: ${m.name} ❤ ${m.hp}/${m.maxHp}  |  Вы ❤ ${p.hp}/${p.maxHp}\n\n` +
     `${choice('Атака', 'atk')} ${choice('Уклонение', 'dodge')} ${choice('Способность', 'skill')} ${choice('Отступить', 'run')}`;
   main.innerHTML = text;
   onChoice((a)=>{
+    if (!combat) return;
     if (combat.turn !== 'player') return;
     if (a==='atk'){ playerAttack(); }
     if (a==='dodge'){ playerDodge(); }
@@ -215,8 +217,11 @@ function playerSkill(){
 }
 
 function tryRun(){
-  if (rng() < 0.5){ logPush('Удалось отступить.'); combat = null; save(); renderLoop(); }
-  else { logPush('Не вышло!'); combat.turn = 'mon'; setTimeout(monAct, 300); renderCombat(); }
+  const p = state.player;
+  const fatigue = 2;
+  p.energy = Math.max(0, p.energy - fatigue);
+  logPush(`Вы отступаете, теряя ${fatigue} энергии.`);
+  combat = null; save(); renderLoop();
 }
 
 function monAct(){
@@ -234,14 +239,15 @@ function monAct(){
 }
 
 function endCombat(victory){
-  const m = combat.mon;
+  const m = combat?.mon;
+  const p = state.player;
   if (victory){
-    const xp = m.xp || 10; gainXp(xp);
-    logPush(`Победа над ${m.name}. Получено ${xp} опыта.`);
-    if (m.loot && rng()<0.7){ const it = pick(m.loot); state.inventory.push(it); logPush(`Трофей: ${it.name}.`); }
+    const xp = m?.xp || 10; gainXp(xp);
+    if (m?.name) logPush(`Победа над ${m.name}. Получено ${xp} опыта.`);
+    if (m?.loot && rng()<0.7){ const it = pick(m.loot); state.inventory.push(it); logPush(`Трофей: ${it.name}.`); }
   } else {
     logPush('Вы пали в бою. Очнулись спустя время.');
-    const p = state.player; p.hp = Math.max(1, Math.floor(p.maxHp*0.5));
+    p.hp = Math.max(1, Math.floor(p.maxHp*0.5));
   }
   combat = null; save(); renderLoop();
 }
