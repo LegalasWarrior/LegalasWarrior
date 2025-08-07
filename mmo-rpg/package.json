@@ -1,0 +1,14 @@
+{
+  "name": "mmo-rpg",
+  "version": "1.0.0",
+  "description": "Simple browser MMO-RPG demo with combat, resource gathering, skills, inventory, and upgrades",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "ws": "^8.17.0",
+    "nanoid": "^5.0.7"
+  }
+}

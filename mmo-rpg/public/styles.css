@@ -1,0 +1,18 @@
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; height: 100%; background: #0d1117; color: #e6edf3; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+#ui { position: absolute; left: 0; top: 0; padding: 12px; display: flex; gap: 12px; width: 100%; pointer-events: none; }
+.hud { flex: 1; max-width: 60%; pointer-events: none; }
+.side { width: 340px; margin-left: auto; display: flex; flex-direction: column; gap: 12px; pointer-events: none; }
+.panel { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; padding: 10px; backdrop-filter: blur(6px); pointer-events: auto; }
+.panel h3 { margin: 0 0 6px; font-size: 16px; color: #a3d0ff; }
+.row { display: flex; align-items: center; gap: 12px; }
+.row.small { font-size: 12px; opacity: 0.8; margin-top: 4px; }
+.hp { display: flex; align-items: center; gap: 10px; }
+.hp .bar { width: 220px; height: 12px; background: #2b313a; border-radius: 6px; overflow: hidden; border: 1px solid #3a4150; }
+#hpBar { height: 100%; width: 0%; background: linear-gradient(90deg, #ff5a5a, #ff2e63); }
+.gold { background: #21262d; border: 1px solid #30363d; padding: 4px 10px; border-radius: 999px; }
+#game { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); border: 1px solid #2f3640; background: #0b0f14; }
+.log { height: 160px; overflow: auto; font-size: 12px; background: #0a1220; border: 1px solid #1f2630; padding: 6px; border-radius: 6px; }
+#inventory, #skills { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; }
+.equip button { margin-left: 8px; }
+.cost { margin-left: 8px; opacity: 0.8; font-size: 12px; }

@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MMO-RPG Demo</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div id="ui">
+    <div class="hud">
+      <div class="row">
+        <div class="hp"><span id="hpText">HP 0/0</span><div class="bar"><div id="hpBar"></div></div></div>
+        <div class="gold">💰 <span id="gold">0</span></div>
+      </div>
+      <div class="row small">
+        <div>Управление: WASD — движение, Space — атака, E — добыть, 1 — апгрейд оружия, 2 — апгрейд брони</div>
+      </div>
+    </div>
+
+    <div class="side">
+      <div class="panel">
+        <h3>Инвентарь</h3>
+        <ul id="inventory"></ul>
+      </div>
+      <div class="panel">
+        <h3>Навыки</h3>
+        <ul id="skills"></ul>
+      </div>
+      <div class="panel">
+        <h3>Снаряжение</h3>
+        <div class="equip">
+          <div>
+            Оружие: <span id="weaponLevel">1</span>
+            <button id="upgradeWeapon">Улучшить</button>
+            <span class="cost" id="weaponCost">—</span>
+          </div>
+          <div>
+            Броня: <span id="armorLevel">1</span>
+            <button id="upgradeArmor">Улучшить</button>
+            <span class="cost" id="armorCost">—</span>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>События</h3>
+        <div id="log" class="log"></div>
+      </div>
+    </div>
+  </div>
+
+  <canvas id="game" width="960" height="600"></canvas>
+
+  <script src="/client.js" type="module"></script>
+</body>
+</html>
