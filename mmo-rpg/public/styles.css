@@ -41,3 +41,11 @@ hr { border: none; border-top: 1px solid #30363d; margin: 8px 0; }
 .modal .header h3 { margin: 0; }
 .modal .close { background: #21262d; border: 1px solid #30363d; }
 .show { display: flex; }
+.panel-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.panel-head h3 { margin: 0; }
+#gatherBusy { min-width: 120px; text-align: right; opacity: 0.9; }
+.rarity-common { filter: none; }
+.rarity-uncommon { box-shadow: inset 0 0 0 1px #58a6ff; }
+.rarity-rare { box-shadow: inset 0 0 0 1px #a371f7; }
+.rarity-epic { box-shadow: inset 0 0 0 1px #da5b76; }
+.rarity-legendary { box-shadow: inset 0 0 0 1px #e3b341; }

@@ -31,96 +31,129 @@ const LOCATIONS = [
   { key: 'fields', name: 'Ремесленные угодья', requiredLevel: 1, type: 'gather' },
 ];
 
+// Rarity helper
+const RARITY = { common: 1, uncommon: 1.3, rare: 1.8, epic: 2.6, legendary: 4.0 };
+function priceWithRarity(base, rarity) { return Math.round(base * (RARITY[rarity] || 1)); }
+
 const ITEMS = {
-  // Weapons with crit and speed
-  rusty_dagger: { key: 'rusty_dagger', name: 'Ржавый кинжал', type: 'weapon', atk: 4, critChance: 0.05, critMult: 1.5, attackSpeed: 0.05, basePrice: 20 },
-  bronze_sword: { key: 'bronze_sword', name: 'Бронзовый меч', type: 'weapon', atk: 7, critChance: 0.06, critMult: 1.6, attackSpeed: 0.08, basePrice: 80 },
-  iron_sword: { key: 'iron_sword', name: 'Железный меч', type: 'weapon', atk: 11, critChance: 0.08, critMult: 1.7, attackSpeed: 0.12, basePrice: 180 },
-  steel_sword: { key: 'steel_sword', name: 'Стальной меч', type: 'weapon', atk: 16, critChance: 0.10, critMult: 1.8, attackSpeed: 0.16, basePrice: 400 },
-  mythril_blade: { key: 'mythril_blade', name: 'Мифриловый клинок', type: 'weapon', atk: 24, critChance: 0.12, critMult: 2.0, attackSpeed: 0.22, basePrice: 1200 },
+  // Weapons
+  rusty_dagger: { key: 'rusty_dagger', name: 'Ржавый кинжал', type: 'weapon', rarity: 'common', atk: 4, critChance: 0.05, critMult: 1.5, attackSpeed: 0.05, basePrice: priceWithRarity(20, 'common') },
+  bronze_sword: { key: 'bronze_sword', name: 'Бронзовый меч', type: 'weapon', rarity: 'common', atk: 7, critChance: 0.06, critMult: 1.6, attackSpeed: 0.08, basePrice: priceWithRarity(80, 'common') },
+  iron_sword: { key: 'iron_sword', name: 'Железный меч', type: 'weapon', rarity: 'uncommon', atk: 11, critChance: 0.08, critMult: 1.7, attackSpeed: 0.12, basePrice: priceWithRarity(180, 'uncommon') },
+  steel_sword: { key: 'steel_sword', name: 'Стальной меч', type: 'weapon', rarity: 'rare', atk: 16, critChance: 0.10, critMult: 1.8, attackSpeed: 0.16, basePrice: priceWithRarity(400, 'rare') },
+  mythril_blade: { key: 'mythril_blade', name: 'Мифриловый клинок', type: 'weapon', rarity: 'epic', atk: 24, critChance: 0.12, critMult: 2.0, attackSpeed: 0.22, basePrice: priceWithRarity(1200, 'epic') },
+  ultra_blade: { key: 'ultra_blade', name: 'Ультраклинок', type: 'weapon', rarity: 'legendary', atk: 36, critChance: 0.15, critMult: 2.3, attackSpeed: 0.28, basePrice: priceWithRarity(2600, 'legendary') },
 
-  // Armor with damage reduction
-  cloth_garb: { key: 'cloth_garb', name: 'Тканевый наряд', type: 'armor', def: 2, dmgReduction: 0.02, basePrice: 25 },
-  leather_armor: { key: 'leather_armor', name: 'Кожаная броня', type: 'armor', def: 5, dmgReduction: 0.05, basePrice: 110 },
-  chainmail: { key: 'chainmail', name: 'Кольчуга', type: 'armor', def: 9, dmgReduction: 0.08, basePrice: 260 },
-  plate_armor: { key: 'plate_armor', name: 'Латы', type: 'armor', def: 14, dmgReduction: 0.12, basePrice: 600 },
-  dragonscale: { key: 'dragonscale', name: 'Драконья чешуя (доспех)', type: 'armor', def: 22, dmgReduction: 0.18, basePrice: 1600 },
+  // Armor
+  cloth_garb: { key: 'cloth_garb', name: 'Тканевый наряд', type: 'armor', rarity: 'common', def: 2, dmgReduction: 0.02, basePrice: priceWithRarity(25, 'common') },
+  leather_armor: { key: 'leather_armor', name: 'Кожаная броня', type: 'armor', rarity: 'common', def: 5, dmgReduction: 0.05, basePrice: priceWithRarity(110, 'common') },
+  chainmail: { key: 'chainmail', name: 'Кольчуга', type: 'armor', rarity: 'uncommon', def: 9, dmgReduction: 0.08, basePrice: priceWithRarity(260, 'uncommon') },
+  plate_armor: { key: 'plate_armor', name: 'Латы', type: 'armor', rarity: 'rare', def: 14, dmgReduction: 0.12, basePrice: priceWithRarity(600, 'rare') },
+  dragonscale: { key: 'dragonscale', name: 'Драконья чешуя (доспех)', type: 'armor', rarity: 'epic', def: 22, dmgReduction: 0.18, basePrice: priceWithRarity(1600, 'epic') },
+  ultra_armor: { key: 'ultra_armor', name: 'Ультракераса', type: 'armor', rarity: 'legendary', def: 32, dmgReduction: 0.24, basePrice: priceWithRarity(3000, 'legendary') },
 
-  // Tools with gather speed and luck
-  crude_pickaxe: { key: 'crude_pickaxe', name: 'Грубая кирка', type: 'tool', tool: 'pickaxe', tier: 1, gatherSpeed: 0.10, gatherLuck: 0.05, basePrice: 60 },
-  sturdy_pickaxe: { key: 'sturdy_pickaxe', name: 'Крепкая кирка', type: 'tool', tool: 'pickaxe', tier: 2, gatherSpeed: 0.20, gatherLuck: 0.10, basePrice: 180 },
-  master_pickaxe: { key: 'master_pickaxe', name: 'Мастерская кирка', type: 'tool', tool: 'pickaxe', tier: 3, gatherSpeed: 0.35, gatherLuck: 0.15, basePrice: 520 },
-  crude_axe: { key: 'crude_axe', name: 'Грубый топор', type: 'tool', tool: 'axe', tier: 1, gatherSpeed: 0.10, gatherLuck: 0.05, basePrice: 60 },
-  sturdy_axe: { key: 'sturdy_axe', name: 'Крепкий топор', type: 'tool', tool: 'axe', tier: 2, gatherSpeed: 0.20, gatherLuck: 0.10, basePrice: 180 },
-  master_axe: { key: 'master_axe', name: 'Мастерский топор', type: 'tool', tool: 'axe', tier: 3, gatherSpeed: 0.35, gatherLuck: 0.15, basePrice: 520 },
-  twig_rod: { key: 'twig_rod', name: 'Ветвистая удочка', type: 'tool', tool: 'rod', tier: 1, gatherSpeed: 0.08, gatherLuck: 0.06, basePrice: 50 },
-  fiber_rod: { key: 'fiber_rod', name: 'Фибровая удочка', type: 'tool', tool: 'rod', tier: 2, gatherSpeed: 0.16, gatherLuck: 0.12, basePrice: 150 },
-  crystal_rod: { key: 'crystal_rod', name: 'Кристаллическая удочка', type: 'tool', tool: 'rod', tier: 3, gatherSpeed: 0.28, gatherLuck: 0.18, basePrice: 480 },
-  field_knife: { key: 'field_knife', name: 'Полевой нож', type: 'tool', tool: 'knife', tier: 1, gatherSpeed: 0.08, gatherLuck: 0.05, basePrice: 50 },
-  hunter_knife: { key: 'hunter_knife', name: 'Охотничий нож', type: 'tool', tool: 'knife', tier: 2, gatherSpeed: 0.16, gatherLuck: 0.10, basePrice: 150 },
-  butcher_knife: { key: 'butcher_knife', name: 'Разделочный нож', type: 'tool', tool: 'knife', tier: 3, gatherSpeed: 0.28, gatherLuck: 0.16, basePrice: 480 },
-  hand_sickle: { key: 'hand_sickle', name: 'Ручной серп', type: 'tool', tool: 'sickle', tier: 1, gatherSpeed: 0.08, gatherLuck: 0.05, basePrice: 50 },
-  iron_sickle: { key: 'iron_sickle', name: 'Железный серп', type: 'tool', tool: 'sickle', tier: 2, gatherSpeed: 0.16, gatherLuck: 0.10, basePrice: 150 },
-  moon_sickle: { key: 'moon_sickle', name: 'Лунный серп', type: 'tool', tool: 'sickle', tier: 3, gatherSpeed: 0.28, gatherLuck: 0.16, basePrice: 480 },
+  // Tools
+  crude_pickaxe: { key: 'crude_pickaxe', name: 'Грубая кирка', type: 'tool', rarity: 'common', tool: 'pickaxe', tier: 1, gatherSpeed: 0.10, gatherLuck: 0.05, basePrice: priceWithRarity(60, 'common') },
+  sturdy_pickaxe: { key: 'sturdy_pickaxe', name: 'Крепкая кирка', type: 'tool', rarity: 'uncommon', tool: 'pickaxe', tier: 2, gatherSpeed: 0.20, gatherLuck: 0.10, basePrice: priceWithRarity(180, 'uncommon') },
+  master_pickaxe: { key: 'master_pickaxe', name: 'Мастерская кирка', type: 'tool', rarity: 'rare', tool: 'pickaxe', tier: 3, gatherSpeed: 0.35, gatherLuck: 0.15, basePrice: priceWithRarity(520, 'rare') },
+  crude_axe: { key: 'crude_axe', name: 'Грубый топор', type: 'tool', rarity: 'common', tool: 'axe', tier: 1, gatherSpeed: 0.10, gatherLuck: 0.05, basePrice: priceWithRarity(60, 'common') },
+  sturdy_axe: { key: 'sturdy_axe', name: 'Крепкий топор', type: 'tool', rarity: 'uncommon', tool: 'axe', tier: 2, gatherSpeed: 0.20, gatherLuck: 0.10, basePrice: priceWithRarity(180, 'uncommon') },
+  master_axe: { key: 'master_axe', name: 'Мастерский топор', type: 'tool', rarity: 'rare', tool: 'axe', tier: 3, gatherSpeed: 0.35, gatherLuck: 0.15, basePrice: priceWithRarity(520, 'rare') },
+  twig_rod: { key: 'twig_rod', name: 'Ветвистая удочка', type: 'tool', rarity: 'common', tool: 'rod', tier: 1, gatherSpeed: 0.08, gatherLuck: 0.06, basePrice: priceWithRarity(50, 'common') },
+  fiber_rod: { key: 'fiber_rod', name: 'Фибровая удочка', type: 'tool', rarity: 'uncommon', tool: 'rod', tier: 2, gatherSpeed: 0.16, gatherLuck: 0.12, basePrice: priceWithRarity(150, 'uncommon') },
+  crystal_rod: { key: 'crystal_rod', name: 'Кристаллическая удочка', type: 'tool', rarity: 'rare', tool: 'rod', tier: 3, gatherSpeed: 0.28, gatherLuck: 0.18, basePrice: priceWithRarity(480, 'rare') },
+  field_knife: { key: 'field_knife', name: 'Полевой нож', type: 'tool', rarity: 'common', tool: 'knife', tier: 1, gatherSpeed: 0.08, gatherLuck: 0.05, basePrice: priceWithRarity(50, 'common') },
+  hunter_knife: { key: 'hunter_knife', name: 'Охотничий нож', type: 'tool', rarity: 'uncommon', tool: 'knife', tier: 2, gatherSpeed: 0.16, gatherLuck: 0.10, basePrice: priceWithRarity(150, 'uncommon') },
+  butcher_knife: { key: 'butcher_knife', name: 'Разделочный нож', type: 'tool', rarity: 'rare', tool: 'knife', tier: 3, gatherSpeed: 0.28, gatherLuck: 0.16, basePrice: priceWithRarity(480, 'rare') },
+  hand_sickle: { key: 'hand_sickle', name: 'Ручной серп', type: 'tool', rarity: 'common', tool: 'sickle', tier: 1, gatherSpeed: 0.08, gatherLuck: 0.05, basePrice: priceWithRarity(50, 'common') },
+  iron_sickle: { key: 'iron_sickle', name: 'Железный серп', type: 'tool', rarity: 'uncommon', tool: 'sickle', tier: 2, gatherSpeed: 0.16, gatherLuck: 0.10, basePrice: priceWithRarity(150, 'uncommon') },
+  moon_sickle: { key: 'moon_sickle', name: 'Лунный серп', type: 'tool', rarity: 'rare', tool: 'sickle', tier: 3, gatherSpeed: 0.28, gatherLuck: 0.16, basePrice: priceWithRarity(480, 'rare') },
 
-  // Consumables
-  small_potion: { key: 'small_potion', name: 'Малая лечебная настойка', type: 'consumable', heal: 30, basePrice: 20 },
-  mid_potion: { key: 'mid_potion', name: 'Средняя лечебная настойка', type: 'consumable', heal: 70, basePrice: 60 },
-  big_potion: { key: 'big_potion', name: 'Большая лечебная настойка', type: 'consumable', heal: 140, basePrice: 120 },
+  // Consumables (rarity influences price only)
+  small_potion: { key: 'small_potion', name: 'Малая лечебная настойка', type: 'consumable', rarity: 'common', heal: 30, basePrice: priceWithRarity(20, 'common') },
+  mid_potion: { key: 'mid_potion', name: 'Средняя лечебная настойка', type: 'consumable', rarity: 'common', heal: 70, basePrice: priceWithRarity(60, 'common') },
+  big_potion: { key: 'big_potion', name: 'Большая лечебная настойка', type: 'consumable', rarity: 'uncommon', heal: 140, basePrice: priceWithRarity(120, 'uncommon') },
 
-  // Resources & materials & junk as before
-  ore: { key: 'ore', name: 'Руда', type: 'resource', basePrice: 14 },
-  wood: { key: 'wood', name: 'Дерево', type: 'resource', basePrice: 10 },
-  fish: { key: 'fish', name: 'Рыба', type: 'resource', basePrice: 9 },
-  herb: { key: 'herb', name: 'Трава', type: 'resource', basePrice: 11 },
-  hide: { key: 'hide', name: 'Шкура', type: 'resource', basePrice: 13 },
+  // Resource tiers
+  ore: { key: 'ore', name: 'Руда', type: 'resource', rarity: 'common', basePrice: priceWithRarity(14, 'common') },
+  iron_ore: { key: 'iron_ore', name: 'Железная руда', type: 'resource', rarity: 'common', basePrice: priceWithRarity(20, 'common') },
+  steel_ore: { key: 'steel_ore', name: 'Стальная руда', type: 'resource', rarity: 'uncommon', basePrice: priceWithRarity(32, 'uncommon') },
+  ultrasteel_ore: { key: 'ultrasteel_ore', name: 'Ультраруда', type: 'resource', rarity: 'rare', basePrice: priceWithRarity(60, 'rare') },
+  wood: { key: 'wood', name: 'Дерево', type: 'resource', rarity: 'common', basePrice: priceWithRarity(10, 'common') },
+  hard_wood: { key: 'hard_wood', name: 'Твёрдая древесина', type: 'resource', rarity: 'uncommon', basePrice: priceWithRarity(22, 'uncommon') },
+  fish: { key: 'fish', name: 'Рыба', type: 'resource', rarity: 'common', basePrice: priceWithRarity(9, 'common') },
+  herb: { key: 'herb', name: 'Трава', type: 'resource', rarity: 'common', basePrice: priceWithRarity(11, 'common') },
+  rare_herb: { key: 'rare_herb', name: 'Редкая трава', type: 'resource', rarity: 'rare', basePrice: priceWithRarity(48, 'rare') },
+  hide: { key: 'hide', name: 'Шкура', type: 'resource', rarity: 'common', basePrice: priceWithRarity(13, 'common') },
+  rare_resin: { key: 'rare_resin', name: 'Редкая смола', type: 'resource', rarity: 'rare', basePrice: priceWithRarity(52, 'rare') },
 
-  bronze_ingot: { key: 'bronze_ingot', name: 'Бронзовый слиток', type: 'material', basePrice: 36 },
-  iron_ingot: { key: 'iron_ingot', name: 'Железный слиток', type: 'material', basePrice: 62 },
-  wood_plank: { key: 'wood_plank', name: 'Доска', type: 'material', basePrice: 18 },
-  leather: { key: 'leather', name: 'Кожа', type: 'material', basePrice: 28 },
-  tincture: { key: 'tincture', name: 'Эссенция трав', type: 'material', basePrice: 30 },
+  // Materials
+  bronze_ingot: { key: 'bronze_ingot', name: 'Бронзовый слиток', type: 'material', rarity: 'common', basePrice: priceWithRarity(36, 'common') },
+  iron_ingot: { key: 'iron_ingot', name: 'Железный слиток', type: 'material', rarity: 'common', basePrice: priceWithRarity(62, 'common') },
+  steel_ingot: { key: 'steel_ingot', name: 'Стальной слиток', type: 'material', rarity: 'uncommon', basePrice: priceWithRarity(120, 'uncommon') },
+  ultrasteel_ingot: { key: 'ultrasteel_ingot', name: 'Ультрасталь', type: 'material', rarity: 'epic', basePrice: priceWithRarity(520, 'epic') },
+  wood_plank: { key: 'wood_plank', name: 'Доска', type: 'material', rarity: 'common', basePrice: priceWithRarity(18, 'common') },
+  hard_plank: { key: 'hard_plank', name: 'Твёрдая доска', type: 'material', rarity: 'uncommon', basePrice: priceWithRarity(40, 'uncommon') },
+  leather: { key: 'leather', name: 'Кожа', type: 'material', rarity: 'common', basePrice: priceWithRarity(28, 'common') },
+  tincture: { key: 'tincture', name: 'Эссенция трав', type: 'material', rarity: 'uncommon', basePrice: priceWithRarity(30, 'uncommon') },
+  resin_core: { key: 'resin_core', name: 'Смоляное ядро', type: 'material', rarity: 'rare', basePrice: priceWithRarity(180, 'rare') },
 
-  torn_cloth: { key: 'torn_cloth', name: 'Рваная ткань', type: 'junk', basePrice: 4 },
-  cracked_bone: { key: 'cracked_bone', name: 'Треснувшая кость', type: 'junk', basePrice: 5 },
-  rusty_gear: { key: 'rusty_gear', name: 'Ржавое железо', type: 'junk', basePrice: 6 },
-  obsidian_shard: { key: 'obsidian_shard', name: 'Обсидиановый осколок', type: 'junk', basePrice: 12 },
-  storm_essence: { key: 'storm_essence', name: 'Сущность грозы', type: 'junk', basePrice: 14 },
+  // Junk/Loot
+  torn_cloth: { key: 'torn_cloth', name: 'Рваная ткань', type: 'junk', rarity: 'common', basePrice: priceWithRarity(4, 'common') },
+  cracked_bone: { key: 'cracked_bone', name: 'Треснувшая кость', type: 'junk', rarity: 'common', basePrice: priceWithRarity(5, 'common') },
+  rusty_gear: { key: 'rusty_gear', name: 'Ржавое железо', type: 'junk', rarity: 'common', basePrice: priceWithRarity(6, 'common') },
+  obsidian_shard: { key: 'obsidian_shard', name: 'Обсидиановый осколок', type: 'junk', rarity: 'rare', basePrice: priceWithRarity(12, 'rare') },
+  storm_essence: { key: 'storm_essence', name: 'Сущность грозы', type: 'junk', rarity: 'rare', basePrice: priceWithRarity(14, 'rare') },
 };
 
 // Expand catalog for tooltips
 const CATALOG = Object.fromEntries(Object.values(ITEMS).map(i => [
   i.key,
-  {
-    key: i.key,
-    name: i.name,
-    type: i.type,
-    atk: i.atk || 0,
-    def: i.def || 0,
-    heal: i.heal || 0,
-    tier: i.tier || 0,
-    gatherSpeed: i.gatherSpeed || 0,
-    gatherLuck: i.gatherLuck || 0,
-    critChance: i.critChance || 0,
-    critMult: i.critMult || 0,
-    attackSpeed: i.attackSpeed || 0,
-    dmgReduction: i.dmgReduction || 0,
-  }
+  { key: i.key, name: i.name, type: i.type, rarity: i.rarity || 'common', atk: i.atk || 0, def: i.def || 0, heal: i.heal || 0, tier: i.tier || 0, gatherSpeed: i.gatherSpeed || 0, gatherLuck: i.gatherLuck || 0, critChance: i.critChance || 0, critMult: i.critMult || 0, attackSpeed: i.attackSpeed || 0, dmgReduction: i.dmgReduction || 0 }
 ]));
 
-// Crafting recipes
+// Crafting recipes (extended)
 const RECIPES = [
   { key: 'bronze_ingot', name: 'Переплавка бронзы', out: 'bronze_ingot', qty: 1, inputs: { ore: 3 } },
-  { key: 'iron_ingot', name: 'Переплавка железа', out: 'iron_ingot', qty: 1, inputs: { ore: 5 } },
+  { key: 'iron_ingot', name: 'Переплавка железа', out: 'iron_ingot', qty: 1, inputs: { iron_ore: 4 } },
+  { key: 'steel_ingot', name: 'Переплавка стали', out: 'steel_ingot', qty: 1, inputs: { steel_ore: 5, iron_ingot: 1 } },
+  { key: 'ultrasteel_ingot', name: 'Закалка ультрастали', out: 'ultrasteel_ingot', qty: 1, inputs: { ultrasteel_ore: 3, resin_core: 1 } },
   { key: 'wood_plank', name: 'Распил досок', out: 'wood_plank', qty: 2, inputs: { wood: 2 } },
+  { key: 'hard_plank', name: 'Распил твёрдых досок', out: 'hard_plank', qty: 2, inputs: { hard_wood: 2 } },
   { key: 'leather', name: 'Выделка кожи', out: 'leather', qty: 1, inputs: { hide: 2 } },
-  { key: 'tincture', name: 'Травяная эссенция', out: 'tincture', qty: 1, inputs: { herb: 3 } },
-  { key: 'bronze_sword', name: 'Ковать бронзовый меч', out: 'bronze_sword', qty: 1, inputs: { bronze_ingot: 2, wood_plank: 1 } },
+  { key: 'tincture', name: 'Травяная эссенция', out: 'tincture', qty: 1, inputs: { herb: 3, rare_herb: 1 } },
+  { key: 'resin_core', name: 'Смоляное ядро', out: 'resin_core', qty: 1, inputs: { rare_resin: 3 } },
+
+  // Weapons
   { key: 'iron_sword', name: 'Ковать железный меч', out: 'iron_sword', qty: 1, inputs: { iron_ingot: 2, wood_plank: 1 } },
-  { key: 'leather_armor', name: 'Шить кожаную броню', out: 'leather_armor', qty: 1, inputs: { leather: 3, tincture: 1 } },
+  { key: 'steel_sword', name: 'Ковать стальной меч', out: 'steel_sword', qty: 1, inputs: { steel_ingot: 2, hard_plank: 1 } },
+  { key: 'mythril_blade', name: 'Ковать мифриловый клинок', out: 'mythril_blade', qty: 1, inputs: { steel_ingot: 3, tincture: 2 } },
+  { key: 'ultra_blade', name: 'Ковать ультраклинок', out: 'ultra_blade', qty: 1, inputs: { ultrasteel_ingot: 2, resin_core: 1 } },
+
+  // Armor
   { key: 'chainmail', name: 'Ковать кольчугу', out: 'chainmail', qty: 1, inputs: { iron_ingot: 4, leather: 1 } },
+  { key: 'plate_armor', name: 'Ковать латы', out: 'plate_armor', qty: 1, inputs: { steel_ingot: 4, leather: 1 } },
+  { key: 'dragonscale', name: 'Шить драконью броню', out: 'dragonscale', qty: 1, inputs: { leather: 4, resin_core: 1 } },
+  { key: 'ultra_armor', name: 'Ковать ультракерасу', out: 'ultra_armor', qty: 1, inputs: { ultrasteel_ingot: 3, resin_core: 2 } },
+
+  // Tools
+  { key: 'sturdy_pickaxe', name: 'Ковать крепкую кирку', out: 'sturdy_pickaxe', qty: 1, inputs: { iron_ingot: 2, wood_plank: 1 } },
+  { key: 'master_pickaxe', name: 'Ковать мастерскую кирку', out: 'master_pickaxe', qty: 1, inputs: { steel_ingot: 2, hard_plank: 1 } },
+  { key: 'sturdy_axe', name: 'Ковать крепкий топор', out: 'sturdy_axe', qty: 1, inputs: { iron_ingot: 2, wood_plank: 1 } },
+  { key: 'master_axe', name: 'Ковать мастерский топор', out: 'master_axe', qty: 1, inputs: { steel_ingot: 2, hard_plank: 1 } },
+  { key: 'fiber_rod', name: 'Изготовить фибровую удочку', out: 'fiber_rod', qty: 1, inputs: { wood_plank: 2, tincture: 1 } },
+  { key: 'crystal_rod', name: 'Изготовить кристаллическую удочку', out: 'crystal_rod', qty: 1, inputs: { hard_plank: 2, tincture: 2 } },
+  { key: 'hunter_knife', name: 'Точить охотничий нож', out: 'hunter_knife', qty: 1, inputs: { iron_ingot: 1, wood_plank: 1 } },
+  { key: 'butcher_knife', name: 'Точить разделочный нож', out: 'butcher_knife', qty: 1, inputs: { steel_ingot: 1, hard_plank: 1 } },
+  { key: 'iron_sickle', name: 'Ковать железный серп', out: 'iron_sickle', qty: 1, inputs: { iron_ingot: 1, wood_plank: 1 } },
+  { key: 'moon_sickle', name: 'Ковать лунный серп', out: 'moon_sickle', qty: 1, inputs: { steel_ingot: 1, hard_plank: 1 } },
+
+  // Potions
   { key: 'mid_potion', name: 'Варить среднюю настойку', out: 'mid_potion', qty: 1, inputs: { tincture: 2, herb: 1 } },
 ];
+
+// Ensure ultrasteel cannot be bought: exclude from merchants' sells by design
+// (we already don't add it into MERCHANTS sells lists)
 
 // Demand-driven economy factors (defined later in a single place)
 // Placeholder declarations removed to avoid duplication

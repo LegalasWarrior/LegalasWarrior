@@ -17,6 +17,7 @@ const invEl = document.getElementById('inventory');
 const storageEl = document.getElementById('storage');
 const tradeEl = document.getElementById('trade');
 const craftEl = document.getElementById('craft');
+const gatherBusyEl = document.getElementById('gatherBusy');
 
 // Add skills container
 let skillsBox = document.getElementById('skills');
@@ -122,7 +123,13 @@ function renderAll() {
   // Logs
   logEl.innerHTML = '';
   for (const line of you.logs) { const div = document.createElement('div'); div.textContent = line; logEl.appendChild(div); }
-  if (isBusy()) { const div = document.createElement('div'); div.textContent = `⏳ ${you.busy.action || 'Занято'} (${Math.ceil(busyRemainMs()/1000)}с)`; logEl.appendChild(div); }
+  // Busy indicator location-aware
+  if (gatherBusyEl) gatherBusyEl.textContent = '';
+  if (isBusy()) {
+    const text = `⏳ ${you.busy.action || 'Занято'} (${Math.ceil(busyRemainMs()/1000)}с)`;
+    const locType = (meta.locations.find(x => x.key === you.location) || {}).type;
+    if (locType === 'gather' && gatherBusyEl) gatherBusyEl.textContent = text; else { const div = document.createElement('div'); div.textContent = text; logEl.appendChild(div); }
+  }
 
   // Combat
   if (you.encounter) { combatPanel.style.display = ''; combatInfo.textContent = `${you.encounter.name} — HP ${you.encounter.hp}`; } else { combatPanel.style.display = 'none'; }
@@ -199,9 +206,9 @@ function ensureSearchButton(locType, you) {
 }
 
 function renderInvRow(k, cnt, where, meta) {
-  const data = state.meta.catalog[k] || { name: k, type: 'прочее' };
+  const data = state.meta.catalog[k] || { name: k, type: 'прочее', rarity: 'common' };
   const row = document.createElement('div'); row.className = 'list';
-  row.innerHTML = `<div class="tooltip">${data.name}<div class="tip">${itemTooltip(k, data)}</div></div><div class="badge type-${data.type}">x${cnt}</div>`;
+  row.innerHTML = `<div class="tooltip">${data.name}<div class="tip">${itemTooltip(k, data)}</div></div><div class="badge type-${data.type} rarity-${data.rarity}">x${cnt}</div>`;
   const box = document.createElement('div'); box.className = 'row';
   const itType = meta.catalog[k]?.type;
   if (itType === 'weapon' || itType === 'armor' || itType === 'tool') { const be = document.createElement('button'); be.textContent = 'Экипировать'; be.disabled = isBusy(); be.onclick = () => send('equip', { itemKey: k }); box.appendChild(be); }
@@ -336,12 +343,18 @@ function skillThreshold(level) { return 100 + (level - 1) * 50 + Math.floor((lev
 
 function itemTooltip(key, data) {
   const parts = [];
+  parts.push(`<b>Редкость: ${rarityName(data.rarity)}</b>`);
   if (data.type === 'weapon') parts.push(`Атака: +${data.atk}`, `Крит: ${(data.critChance*100).toFixed(0)}% ×${data.critMult}`, `Скорость атаки: +${Math.round((data.attackSpeed||0)*100)}%`);
   if (data.type === 'armor') parts.push(`Защита: +${data.def}`, `Снижение урона: ${(data.dmgReduction*100).toFixed(0)}%`);
   if (data.type === 'tool') parts.push(`Тир инструмента: ${data.tier}`, `Скорость добычи: +${Math.round((data.gatherSpeed||0)*100)}%`, `Удача добычи: +${Math.round((data.gatherLuck||0)*100)}%`);
   if (data.type === 'consumable' && data.heal) parts.push(`Лечение: +${data.heal} HP`);
   if (parts.length === 0) parts.push(`Тип: ${typeName(data.type)}`);
   return parts.join('<br/>');
+}
+
+function rarityName(r) {
+  const map = { common:'Обычн.', uncommon:'Необычн.', rare:'Редк.', epic:'Эпичн.', legendary:'Легенд.' };
+  return map[r] || r;
 }
 
 function skillTooltip(key, s) {
