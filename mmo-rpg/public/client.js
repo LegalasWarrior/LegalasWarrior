@@ -246,13 +246,36 @@ function renderCraft(meta, you) {
   craftEl.innerHTML = '';
   const info = document.createElement('div'); info.className = 'small'; info.textContent = 'Крафт доступен только в городе.'; craftEl.appendChild(info);
   if (you.location !== 'city') return;
-  for (const r of meta.recipes) {
-    const row = document.createElement('div'); row.className = 'list';
-    const need = Object.entries(r.inputs).map(([k,v]) => `${itemName(k)} x${v}`).join(', ');
-    row.innerHTML = `<div>${r.name} → ${itemName(r.out)} x${r.qty}</div><div class="badge">Нужно: ${need}</div>`;
-    const btn = document.createElement('button'); btn.textContent = 'Создать'; btn.disabled = isBusy(); btn.onclick = () => numberPrompt('Сколько создать?', (q) => { showCraftProgress(); send('craft', { recipeKey: r.key, qty: q }); }); row.appendChild(btn);
-    craftEl.appendChild(row);
+
+  const filters = [
+    { key: 'all', name: 'Все' },
+    { key: 'resource', name: 'Ресурсы' },
+    { key: 'material', name: 'Материалы' },
+    { key: 'weapon', name: 'Оружие' },
+    { key: 'armor', name: 'Броня' },
+    { key: 'tool', name: 'Инструменты' },
+    { key: 'consumable', name: 'Расходники' },
+  ];
+  const bar = document.createElement('div'); bar.className = 'row';
+  let current = 'all';
+  filters.forEach(f => { const b = document.createElement('button'); b.textContent = f.name; b.onclick = () => { current = f.key; drawList(); }; bar.appendChild(b); });
+  craftEl.appendChild(bar);
+
+  const listWrap = document.createElement('div'); craftEl.appendChild(listWrap);
+  const typeOfOut = (r) => (state.meta.catalog[r.out]?.type || 'прочее');
+
+  function drawList() {
+    listWrap.innerHTML = '';
+    const recs = meta.recipes.filter(r => current === 'all' ? true : typeOfOut(r) === current);
+    for (const r of recs) {
+      const row = document.createElement('div'); row.className = 'list';
+      const need = Object.entries(r.inputs).map(([k,v]) => `${itemName(k)} x${v}`).join(', ');
+      row.innerHTML = `<div>${r.name} → ${itemName(r.out)} x${r.qty}</div><div class="badge">Нужно: ${need}</div>`;
+      const btn = document.createElement('button'); btn.textContent = 'Создать'; btn.disabled = isBusy(); btn.onclick = () => numberPrompt('Сколько создать?', (q) => { showCraftProgress(); send('craft', { recipeKey: r.key, qty: q }); }); row.appendChild(btn);
+      listWrap.appendChild(row);
+    }
   }
+  drawList();
 }
 
 // Visual craft progress bar while busy
