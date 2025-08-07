@@ -2,6 +2,8 @@ import express from 'express';
 import http from 'http';
 import { WebSocketServer } from 'ws';
 import { randomUUID } from 'crypto';
+import { promises as fs } from 'fs';
+import path from 'path';
 
 // Text RPG Server
 const app = express();
@@ -10,8 +12,15 @@ const server = http.createServer(app);
 const wss = new WebSocketServer({ server });
 const PORT = process.env.PORT || 3000;
 
+const DATA_DIR = path.resolve('./data');
+const PLAYERS_FILE = path.join(DATA_DIR, 'players.json');
+
+async function ensureDataDir() {
+  try { await fs.mkdir(DATA_DIR, { recursive: true }); } catch {}
+}
+
 // -----------------------
-// Game Data
+// Game Data (unchanged items but ensure type info exists)
 // -----------------------
 const LOCATIONS = [
   { key: 'city', name: 'Астер (Центральный город)', requiredLevel: 1, type: 'city' },
@@ -22,24 +31,19 @@ const LOCATIONS = [
   { key: 'fields', name: 'Ремесленные угодья', requiredLevel: 1, type: 'gather' },
 ];
 
-// Items registry
-// type: 'weapon' | 'armor' | 'tool' | 'consumable' | 'resource' | 'material' | 'junk'
 const ITEMS = {
-  // Weapons
   rusty_dagger: { key: 'rusty_dagger', name: 'Ржавый кинжал', type: 'weapon', atk: 4, basePrice: 20 },
   bronze_sword: { key: 'bronze_sword', name: 'Бронзовый меч', type: 'weapon', atk: 7, basePrice: 80 },
   iron_sword: { key: 'iron_sword', name: 'Железный меч', type: 'weapon', atk: 11, basePrice: 180 },
   steel_sword: { key: 'steel_sword', name: 'Стальной меч', type: 'weapon', atk: 16, basePrice: 400 },
   mythril_blade: { key: 'mythril_blade', name: 'Мифриловый клинок', type: 'weapon', atk: 24, basePrice: 1200 },
 
-  // Armor
   cloth_garb: { key: 'cloth_garb', name: 'Тканевый наряд', type: 'armor', def: 2, basePrice: 25 },
   leather_armor: { key: 'leather_armor', name: 'Кожаная броня', type: 'armor', def: 5, basePrice: 110 },
   chainmail: { key: 'chainmail', name: 'Кольчуга', type: 'armor', def: 9, basePrice: 260 },
   plate_armor: { key: 'plate_armor', name: 'Латы', type: 'armor', def: 14, basePrice: 600 },
   dragonscale: { key: 'dragonscale', name: 'Драконья чешуя (доспех)', type: 'armor', def: 22, basePrice: 1600 },
 
-  // Tools (tier influences gathering)
   crude_pickaxe: { key: 'crude_pickaxe', name: 'Грубая кирка', type: 'tool', tool: 'pickaxe', tier: 1, basePrice: 60 },
   sturdy_pickaxe: { key: 'sturdy_pickaxe', name: 'Крепкая кирка', type: 'tool', tool: 'pickaxe', tier: 2, basePrice: 180 },
   master_pickaxe: { key: 'master_pickaxe', name: 'Мастерская кирка', type: 'tool', tool: 'pickaxe', tier: 3, basePrice: 520 },
@@ -56,32 +60,30 @@ const ITEMS = {
   iron_sickle: { key: 'iron_sickle', name: 'Железный серп', type: 'tool', tool: 'sickle', tier: 2, basePrice: 150 },
   moon_sickle: { key: 'moon_sickle', name: 'Лунный серп', type: 'tool', tool: 'sickle', tier: 3, basePrice: 480 },
 
-  // Consumables
   small_potion: { key: 'small_potion', name: 'Малая лечебная настойка', type: 'consumable', heal: 30, basePrice: 40 },
   mid_potion: { key: 'mid_potion', name: 'Средняя лечебная настойка', type: 'consumable', heal: 70, basePrice: 110 },
   big_potion: { key: 'big_potion', name: 'Большая лечебная настойка', type: 'consumable', heal: 140, basePrice: 240 },
 
-  // Resources
   ore: { key: 'ore', name: 'Руда', type: 'resource', basePrice: 14 },
   wood: { key: 'wood', name: 'Дерево', type: 'resource', basePrice: 10 },
   fish: { key: 'fish', name: 'Рыба', type: 'resource', basePrice: 9 },
   herb: { key: 'herb', name: 'Трава', type: 'resource', basePrice: 11 },
   hide: { key: 'hide', name: 'Шкура', type: 'resource', basePrice: 13 },
 
-  // Materials
   bronze_ingot: { key: 'bronze_ingot', name: 'Бронзовый слиток', type: 'material', basePrice: 36 },
   iron_ingot: { key: 'iron_ingot', name: 'Железный слиток', type: 'material', basePrice: 62 },
   wood_plank: { key: 'wood_plank', name: 'Доска', type: 'material', basePrice: 18 },
   leather: { key: 'leather', name: 'Кожа', type: 'material', basePrice: 28 },
   tincture: { key: 'tincture', name: 'Эссенция трав', type: 'material', basePrice: 30 },
 
-  // Junk/Loot
   torn_cloth: { key: 'torn_cloth', name: 'Рваная ткань', type: 'junk', basePrice: 4 },
   cracked_bone: { key: 'cracked_bone', name: 'Треснувшая кость', type: 'junk', basePrice: 5 },
   rusty_gear: { key: 'rusty_gear', name: 'Ржавое железо', type: 'junk', basePrice: 6 },
   obsidian_shard: { key: 'obsidian_shard', name: 'Обсидиановый осколок', type: 'junk', basePrice: 12 },
   storm_essence: { key: 'storm_essence', name: 'Сущность грозы', type: 'junk', basePrice: 14 },
 };
+
+const CATALOG = Object.fromEntries(Object.values(ITEMS).map(i => [i.key, { key: i.key, name: i.name, type: i.type }]));
 
 // Crafting recipes
 const RECIPES = [
@@ -190,12 +192,26 @@ function chance(p) { return Math.random() < p; }
 function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
 
 // -----------------------
-// Player State
+// Player State + Persistence
 // -----------------------
+const sockets = new Map(); // id -> ws
+const players = new Map(); // id -> player
+let dirty = false;
+
+function defaultSkills() {
+  return {
+    mining: { level: 1, xp: 0 },
+    woodcutting: { level: 1, xp: 0 },
+    fishing: { level: 1, xp: 0 },
+    herbalism: { level: 1, xp: 0 },
+    hunting: { level: 1, xp: 0 },
+  };
+}
+
 function makePlayer(id) {
   return {
     id,
-    name: `Игрок-${id.slice(-4)}`,
+    name: `Игрок-${id.slice(0, 6)}`,
     level: 1,
     xp: 0,
     hp: 100,
@@ -203,10 +219,13 @@ function makePlayer(id) {
     gold: 100,
     location: 'city',
     equipment: { weapon: 'rusty_dagger', armor: 'cloth_garb', pickaxe: null, axe: null, rod: null, knife: null, sickle: null },
-    inventory: {}, // itemKey -> count
-    storage: {},   // city warehouse
+    inventory: {},
+    storage: {},
+    skills: defaultSkills(),
     logs: [],
-    encounter: null, // { mob, hp }
+    encounter: null,
+    busyUntil: 0,
+    busyAction: null,
   };
 }
 
@@ -215,35 +234,8 @@ function addLog(player, text) {
   if (player.logs.length > 200) player.logs.pop();
 }
 
-function addItem(bag, itemKey, qty) {
-  if (!ITEMS[itemKey]) return false;
-  bag[itemKey] = (bag[itemKey] || 0) + qty;
-  if (bag[itemKey] <= 0) delete bag[itemKey];
-  return true;
-}
-
-function countStacks(bag) { return Object.keys(bag).length; }
-const INVENTORY_CAP = 30;
-
-function canAddToInventory(player, itemKey) {
-  if (player.inventory[itemKey]) return true; // stacking existing
-  return countStacks(player.inventory) < INVENTORY_CAP;
-}
-
-function playerAttackPower(player) {
-  const weapon = player.equipment.weapon ? ITEMS[player.equipment.weapon] : null;
-  const base = 5 + player.level * 1.5;
-  return Math.round(base + (weapon?.atk || 0));
-}
-function playerDefense(player) {
-  const armor = player.equipment.armor ? ITEMS[player.equipment.armor] : null;
-  const base = 1 + Math.floor(player.level / 5);
-  return base + (armor?.def || 0);
-}
-
-function levelThreshold(level) {
-  return 100 + (level - 1) * 80 + Math.floor((level - 1) * (level - 1) * 12);
-}
+function levelThreshold(level) { return 100 + (level - 1) * 80 + Math.floor((level - 1) * (level - 1) * 12); }
+function skillThreshold(level) { return 60 + (level - 1) * 50 + Math.floor((level - 1) * (level - 1) * 10); }
 
 function grantXp(player, amount) {
   player.xp += amount;
@@ -256,6 +248,44 @@ function grantXp(player, amount) {
     th = levelThreshold(player.level);
     addLog(player, `Вы повысили уровень до ${player.level}! Здоровье восстановлено.`);
   }
+}
+
+function addSkillXp(player, key, xp) {
+  const s = player.skills[key];
+  if (!s) return;
+  s.xp += xp;
+  let th = skillThreshold(s.level);
+  while (s.xp >= th) {
+    s.xp -= th;
+    s.level += 1;
+    th = skillThreshold(s.level);
+    addLog(player, `Навык ${key} повышен до ${s.level}!`);
+  }
+}
+
+function addItem(bag, itemKey, qty) {
+  if (!ITEMS[itemKey]) return false;
+  bag[itemKey] = (bag[itemKey] || 0) + qty;
+  if (bag[itemKey] <= 0) delete bag[itemKey];
+  return true;
+}
+
+function countStacks(bag) { return Object.keys(bag).length; }
+const INVENTORY_CAP = 30;
+function canAddToInventory(player, itemKey) {
+  if (player.inventory[itemKey]) return true;
+  return countStacks(player.inventory) < INVENTORY_CAP;
+}
+
+function playerAttackPower(player) {
+  const weapon = player.equipment.weapon ? ITEMS[player.equipment.weapon] : null;
+  const base = 5 + player.level * 1.5;
+  return Math.round(base + (weapon?.atk || 0));
+}
+function playerDefense(player) {
+  const armor = player.equipment.armor ? ITEMS[player.equipment.armor] : null;
+  const base = 1 + Math.floor(player.level / 5);
+  return base + (armor?.def || 0);
 }
 
 function healCost(player) {
@@ -274,56 +304,69 @@ function randomMobForLocation(locKey, level) {
   const pool = MOBS.filter(m => m.locationKey === locKey && level >= m.minLevel - 3);
   if (pool.length === 0) return null;
   const m = pool[randInt(0, pool.length - 1)];
-  // scale hp slightly by level
   const scale = 1 + Math.max(0, Math.floor((level - m.minLevel) / 5)) * 0.06;
   return { ...m, hp: Math.round(m.hp * scale) };
 }
 
-function calculateGatherChance(player, toolType) {
-  const slot = toolType; // pickaxe/axe/rod/knife/sickle
+function calculateGatherChance(player, toolType, skillKey) {
+  const slot = toolType;
   const key = player.equipment[slot];
   const tier = key ? (ITEMS[key].tier || 0) : 0;
-  let chance = 0.4 + tier * 0.15;
+  const skillLvl = player.skills[skillKey]?.level || 1;
+  let chance = 0.25 + tier * 0.15 + (skillLvl - 1) * 0.05;
   return clamp(chance, 0.2, 0.95);
 }
 
-// -----------------------
-// Economy helpers
-// -----------------------
-function canMerchantBuy(merchant, itemKey) {
-  if (merchant.buys === 'all') return true;
-  const item = ITEMS[itemKey];
-  if (!item) return false;
-  return merchant.buys.includes(item.type);
+// Economy
+const demandFactor = new Map(); // itemKey -> factor
+function getDemandFactor(itemKey) { if (!demandFactor.has(itemKey)) demandFactor.set(itemKey, 1); return demandFactor.get(itemKey); }
+function adjustDemand(itemKey, delta) { demandFactor.set(itemKey, clamp(getDemandFactor(itemKey) + delta, 0.6, 1.8)); }
+function priceFor(itemKey) { const it = ITEMS[itemKey]; if (!it) return 0; return Math.max(1, Math.round(it.basePrice * getDemandFactor(itemKey))); }
+
+const MERCHANTS = [
+  { key: 'general', name: 'Лавка ремесленника', sells: ['small_potion', 'mid_potion', 'crude_pickaxe', 'crude_axe', 'twig_rod', 'field_knife', 'hand_sickle'], buys: 'all' },
+  { key: 'armorer', name: 'Оружейник', sells: ['rusty_dagger', 'bronze_sword', 'cloth_garb', 'leather_armor'], buys: ['weapon', 'armor', 'junk'] },
+  { key: 'trader', name: 'Скупщик ресурсов', sells: [], buys: ['resource', 'material'] },
+];
+function canMerchantBuy(merchant, itemKey) { if (merchant.buys === 'all') return true; const t = ITEMS[itemKey]?.type; return t ? merchant.buys.includes(t) : false; }
+function merchantSells(merchant) { return merchant.sells.map(k => ({ key: k, name: ITEMS[k].name, price: priceFor(k) })); }
+
+// Busy handling
+function isBusy(player) { return Date.now() < player.busyUntil; }
+function beginBusy(player, ms, label, onDone) {
+  const now = Date.now();
+  player.busyUntil = now + ms;
+  player.busyAction = label;
+  addLog(player, `${label}...`);
+  dirty = true;
+  setTimeout(() => { onDone(); dirty = true; pushState(player); }, ms);
 }
 
-function merchantSells(merchant) {
-  return merchant.sells.map(k => ({ key: k, name: ITEMS[k].name, price: priceFor(k) }));
-}
-
-// -----------------------
-// Network
-// -----------------------
-const sockets = new Map(); // id -> ws
-const players = new Map(); // id -> player
-
-function sendTo(playerId, msg) {
-  const ws = sockets.get(playerId);
-  if (ws && ws.readyState === ws.OPEN) ws.send(JSON.stringify(msg));
-}
-
-function pushState(player) {
-  sendTo(player.id, {
-    type: 'state',
-    you: sanitizePlayer(player),
-    meta: {
-      locations: LOCATIONS,
-      merchants: MERCHANTS.map(m => ({ key: m.key, name: m.name, sells: merchantSells(m) })),
-      recipes: RECIPES,
-      prices: Object.fromEntries(Object.keys(ITEMS).map(k => [k, priceFor(k)])),
+// Persistence
+async function loadPlayers() {
+  await ensureDataDir();
+  try {
+    const raw = await fs.readFile(PLAYERS_FILE, 'utf8');
+    const obj = JSON.parse(raw);
+    for (const [id, p] of Object.entries(obj)) {
+      // ensure required fields
+      p.busyUntil = 0; p.busyAction = null; p.encounter = null;
+      p.skills = p.skills || defaultSkills();
+      players.set(id, p);
     }
-  });
+  } catch {}
 }
+
+async function savePlayers() {
+  if (!dirty) return;
+  dirty = false;
+  await ensureDataDir();
+  const obj = Object.fromEntries(Array.from(players.entries()).map(([id, p]) => [id, p]));
+  await fs.writeFile(PLAYERS_FILE, JSON.stringify(obj, null, 2));
+}
+setInterval(() => { savePlayers().catch(()=>{}); }, 2000);
+
+function touch(player) { dirty = true; }
 
 function sanitizePlayer(p) {
   return {
@@ -338,55 +381,81 @@ function sanitizePlayer(p) {
     equipment: p.equipment,
     inventory: p.inventory,
     storage: p.storage,
+    skills: p.skills,
     logs: p.logs,
     encounter: p.encounter ? { name: p.encounter.name, hp: p.encounter.hp, maxHp: p.encounter.hp, atk: p.encounter.atk } : null,
+    busy: { until: p.busyUntil, action: p.busyAction },
   };
 }
 
+function pushState(player) {
+  const catalog = CATALOG;
+  const merchants = MERCHANTS.map(m => ({ key: m.key, name: m.name, sells: merchantSells(m), buys: m.buys }));
+  const prices = Object.fromEntries(Object.keys(ITEMS).map(k => [k, priceFor(k)]));
+  const msg = { type: 'state', you: sanitizePlayer(player), meta: { locations: LOCATIONS, merchants, recipes: RECIPES, prices, catalog } };
+  const ws = sockets.get(player.id);
+  if (ws && ws.readyState === ws.OPEN) ws.send(JSON.stringify(msg));
+}
+
+// Connection + handshake
 wss.on('connection', (ws) => {
-  const id = randomUUID();
-  sockets.set(id, ws);
-  const player = makePlayer(id);
-  // Starter items
-  addItem(player.inventory, 'small_potion', 3);
-  addLog(player, 'Добро пожаловать в текстовую RPG! Вы в городе Астер.');
-  players.set(id, player);
-
-  pushState(player);
-
-  ws.on('message', (buf) => {
-    try {
-      const msg = JSON.parse(buf);
-      handleMessage(player, msg);
-    } catch (_) {}
+  let attachedId = null;
+  ws.on('message', async (buf) => {
+    let msg = null; try { msg = JSON.parse(buf); } catch { return; }
+    if (msg.type === 'hello') {
+      // identify or create
+      let id = msg.playerId;
+      let player = id ? players.get(id) : null;
+      if (!player) {
+        id = randomUUID();
+        player = makePlayer(id);
+        addItem(player.inventory, 'small_potion', 3);
+        addLog(player, 'Добро пожаловать в текстовую RPG! Вы в городе Астер.');
+        players.set(id, player);
+        touch(player);
+      }
+      sockets.set(id, ws);
+      attachedId = id;
+      pushState(player);
+      return;
+    }
+    if (!attachedId) return; // ignore until hello
+    const player = players.get(attachedId);
+    if (!player) return;
+    handleMessage(player, msg);
   });
   ws.on('close', () => {
-    sockets.delete(id);
-    players.delete(id);
+    if (attachedId) sockets.delete(attachedId);
   });
 });
 
 function handleMessage(player, msg) {
   switch (msg.type) {
     case 'navigate': {
+      if (isBusy(player)) { addLog(player, `Вы заняты: ${player.busyAction}.`); pushState(player); break; }
       const to = msg.to;
       const loc = LOCATIONS.find(l => l.key === to);
       if (!loc) { addLog(player, 'Локация не найдена.'); break; }
-      if (!canAccessLocation(player, to)) { addLog(player, `Недостаточный уровень для локации: требуется ${loc.requiredLevel}.`); break; }
+      if (!canAccessLocation(player, to)) { addLog(player, `Недостаточный уровень: требуется ${loc.requiredLevel}.`); break; }
       player.location = to;
       player.encounter = null;
       addLog(player, `Вы переместились в: ${loc.name}.`);
+      touch(player);
       pushState(player);
       break;
     }
     case 'heal': {
       if (player.location !== 'city') { addLog(player, 'Лечиться можно только в городе.'); break; }
+      if (isBusy(player)) { addLog(player, `Вы заняты: ${player.busyAction}.`); pushState(player); break; }
       const cost = healCost(player);
       if (cost === 0) { addLog(player, 'Вы полностью здоровы.'); break; }
       if (player.gold < cost) { addLog(player, `Не хватает золота для лечения (нужно ${cost}).`); break; }
-      player.gold -= cost;
-      player.hp = player.maxHp;
-      addLog(player, `Вы вылечились за ${cost} золота.`);
+      beginBusy(player, 600, 'Лечение', () => {
+        player.gold -= cost;
+        player.hp = player.maxHp;
+        addLog(player, `Вы вылечились за ${cost} золота.`);
+        touch(player);
+      });
       pushState(player);
       break;
     }
@@ -394,67 +463,73 @@ function handleMessage(player, msg) {
       const loc = LOCATIONS.find(l => l.key === player.location);
       if (!loc || loc.type !== 'combat') { addLog(player, 'Здесь нельзя искать врагов.'); break; }
       if (player.encounter) { addLog(player, 'Вы уже в бою.'); break; }
-      const mob = randomMobForLocation(player.location, player.level);
-      if (!mob) { addLog(player, 'Вы никого не нашли.'); break; }
-      player.encounter = { mobKey: mob.key, name: mob.name, hp: mob.hp, atk: mob.atk, xp: mob.xp, gold: mob.gold, dropTable: mob.dropTable };
-      addLog(player, `Вас атакует: ${mob.name}! HP: ${mob.hp}`);
+      if (isBusy(player)) { addLog(player, `Вы заняты: ${player.busyAction}.`); pushState(player); break; }
+      beginBusy(player, 800, 'Поиск противника', () => {
+        const mob = randomMobForLocation(player.location, player.level);
+        if (!mob) { addLog(player, 'Никого не нашли.'); return; }
+        player.encounter = { mobKey: mob.key, name: mob.name, hp: mob.hp, atk: mob.atk, xp: mob.xp, gold: mob.gold, dropTable: mob.dropTable };
+        addLog(player, `Вас атакует: ${mob.name}! HP: ${mob.hp}`);
+        touch(player);
+      });
       pushState(player);
       break;
     }
     case 'attack': {
       if (!player.encounter) { addLog(player, 'Некого атаковать.'); break; }
-      const atk = playerAttackPower(player);
-      const dmg = randInt(Math.max(1, Math.floor(atk * 0.7)), Math.floor(atk * 1.1));
-      player.encounter.hp -= dmg;
-      addLog(player, `Вы ударили по ${player.encounter.name} на ${dmg}.`);
-      if (player.encounter.hp <= 0) {
-        const g = randInt(Math.floor(player.encounter.gold * 0.8), player.encounter.gold);
-        player.gold += g;
-        grantXp(player, player.encounter.xp);
-        // Drops
-        for (const d of player.encounter.dropTable) {
-          if (chance(d.chance)) {
-            const qty = randInt(d.min, d.max);
-            if (canAddToInventory(player, d.itemKey)) {
-              addItem(player.inventory, d.itemKey, qty);
-              addLog(player, `Добыча: ${ITEMS[d.itemKey].name} x${qty}.`);
-            } else {
-              addLog(player, `Нет места в инвентаре для ${ITEMS[d.itemKey].name}.`);
+      if (isBusy(player)) { addLog(player, `Вы заняты: ${player.busyAction}.`); pushState(player); break; }
+      beginBusy(player, 350, 'Атака', () => {
+        const atk = playerAttackPower(player);
+        const dmg = randInt(Math.max(1, Math.floor(atk * 0.7)), Math.floor(atk * 1.1));
+        player.encounter.hp -= dmg;
+        addLog(player, `Вы ударили по ${player.encounter.name} на ${dmg}.`);
+        if (player.encounter.hp <= 0) {
+          const g = randInt(Math.floor(player.encounter.gold * 0.8), player.encounter.gold);
+          player.gold += g;
+          grantXp(player, player.encounter.xp);
+          for (const d of player.encounter.dropTable) {
+            if (chance(d.chance)) {
+              const qty = randInt(d.min, d.max);
+              if (canAddToInventory(player, d.itemKey)) {
+                addItem(player.inventory, d.itemKey, qty);
+                addLog(player, `Добыча: ${ITEMS[d.itemKey].name} x${qty}.`);
+              } else {
+                addLog(player, `Нет места для ${ITEMS[d.itemKey].name}.`);
+              }
             }
           }
+          addLog(player, `Победа! Золото +${g}, опыт +${player.encounter.xp}.`);
+          player.encounter = null;
+          touch(player);
+          return;
         }
-        addLog(player, `Победа! Золото +${g}, опыт +${player.encounter.xp}.`);
-        player.encounter = null;
-        pushState(player);
-        break;
-      }
-      // Enemy turn
-      const def = playerDefense(player);
-      const enemyAtk = player.encounter.atk;
-      const edmgBase = randInt(Math.max(1, Math.floor(enemyAtk * 0.7)), Math.floor(enemyAtk * 1.1));
-      const red = Math.floor(def * 0.5);
-      const edmg = Math.max(1, edmgBase - red);
-      player.hp -= edmg;
-      addLog(player, `${player.encounter.name} бьёт вас на ${edmg}.`);
-      if (player.hp <= 0) {
-        const penalty = Math.max(0, Math.floor(player.gold * 0.1));
-        player.gold -= penalty;
-        player.hp = player.maxHp;
-        player.location = 'city';
-        player.encounter = null;
-        addLog(player, `Вы пали в бою. Потеряно золота: ${penalty}. Вы очнулись в городе.`);
-      }
+        const def = playerDefense(player);
+        const enemyAtk = player.encounter.atk;
+        const edmgBase = randInt(Math.max(1, Math.floor(enemyAtk * 0.7)), Math.floor(enemyAtk * 1.1));
+        const red = Math.floor(def * 0.5);
+        const edmg = Math.max(1, edmgBase - red);
+        player.hp -= edmg;
+        addLog(player, `${player.encounter.name} бьёт вас на ${edmg}.`);
+        if (player.hp <= 0) {
+          const penalty = Math.max(0, Math.floor(player.gold * 0.1));
+          player.gold -= penalty;
+          player.hp = player.maxHp;
+          player.location = 'city';
+          player.encounter = null;
+          addLog(player, `Вы пали в бою. Потеряно золота: ${penalty}. Вы очнулись в городе.`);
+        }
+        touch(player);
+      });
       pushState(player);
       break;
     }
     case 'flee': {
       if (!player.encounter) { addLog(player, 'Вам не от кого бежать.'); break; }
-      if (chance(0.6)) {
-        addLog(player, 'Вы успешно убежали.');
-        player.encounter = null;
-      } else {
-        addLog(player, 'Не удалось сбежать!');
-      }
+      if (isBusy(player)) { addLog(player, `Вы заняты: ${player.busyAction}.`); pushState(player); break; }
+      beginBusy(player, 400, 'Попытка бегства', () => {
+        if (chance(0.6)) { addLog(player, 'Вы успешно убежали.'); player.encounter = null; }
+        else { addLog(player, 'Не удалось сбежать!'); }
+        touch(player);
+      });
       pushState(player);
       break;
     }
@@ -463,49 +538,47 @@ function handleMessage(player, msg) {
       if (!player.inventory[key] || player.inventory[key] <= 0) { addLog(player, 'Нет такого предмета.'); break; }
       const it = ITEMS[key];
       if (!it || it.type !== 'consumable') { addLog(player, 'Этот предмет нельзя использовать.'); break; }
-      player.inventory[key] -= 1; if (player.inventory[key] === 0) delete player.inventory[key];
-      const before = player.hp;
-      player.hp = Math.min(player.maxHp, player.hp + (it.heal || 0));
-      addLog(player, `Вы использовали: ${it.name}. Восстановлено ${player.hp - before} HP.`);
+      if (isBusy(player)) { addLog(player, `Вы заняты: ${player.busyAction}.`); pushState(player); break; }
+      beginBusy(player, 300, 'Использование', () => {
+        addItem(player.inventory, key, -1);
+        const before = player.hp;
+        player.hp = Math.min(player.maxHp, player.hp + (it.heal || 0));
+        addLog(player, `Вы использовали: ${it.name}. Восстановлено ${player.hp - before} HP.`);
+        touch(player);
+      });
       pushState(player);
       break;
     }
     case 'equip': {
-      const key = msg.itemKey;
-      const it = ITEMS[key];
+      const key = msg.itemKey; const it = ITEMS[key];
       if (!it) { addLog(player, 'Неизвестный предмет.'); break; }
       if (!player.inventory[key]) { addLog(player, 'Нет предмета в инвентаре.'); break; }
-      if (it.type === 'weapon') {
-        // swap
-        if (player.equipment.weapon) addItem(player.inventory, player.equipment.weapon, 1);
-        player.equipment.weapon = key;
-        addItem(player.inventory, key, -1);
-        addLog(player, `Вы экипировали оружие: ${it.name}.`);
-      } else if (it.type === 'armor') {
-        if (player.equipment.armor) addItem(player.inventory, player.equipment.armor, 1);
-        player.equipment.armor = key;
-        addItem(player.inventory, key, -1);
-        addLog(player, `Вы экипировали броню: ${it.name}.`);
-      } else if (it.type === 'tool') {
-        const slot = it.tool; // pickaxe/axe/rod/knife/sickle
-        if (player.equipment[slot]) addItem(player.inventory, player.equipment[slot], 1);
-        player.equipment[slot] = key;
-        addItem(player.inventory, key, -1);
-        addLog(player, `Вы вооружились инструментом: ${it.name}.`);
-      } else {
-        addLog(player, 'Этот предмет нельзя экипировать.');
-      }
+      if (isBusy(player)) { addLog(player, `Вы заняты: ${player.busyAction}.`); pushState(player); break; }
+      beginBusy(player, 250, 'Экипировка', () => {
+        if (it.type === 'weapon') {
+          if (player.equipment.weapon) addItem(player.inventory, player.equipment.weapon, 1);
+          player.equipment.weapon = key; addItem(player.inventory, key, -1); addLog(player, `Экипировано оружие: ${it.name}.`);
+        } else if (it.type === 'armor') {
+          if (player.equipment.armor) addItem(player.inventory, player.equipment.armor, 1);
+          player.equipment.armor = key; addItem(player.inventory, key, -1); addLog(player, `Экипирована броня: ${it.name}.`);
+        } else if (it.type === 'tool') {
+          const slot = it.tool;
+          if (player.equipment[slot]) addItem(player.inventory, player.equipment[slot], 1);
+          player.equipment[slot] = key; addItem(player.inventory, key, -1); addLog(player, `Взят инструмент: ${it.name}.`);
+        } else { addLog(player, 'Этот предмет нельзя экипировать.'); }
+        touch(player);
+      });
       pushState(player);
       break;
     }
     case 'unequip': {
-      const slot = msg.slot; // weapon/armor/pickaxe/axe/rod/knife/sickle
-      if (!player.equipment[slot]) { addLog(player, 'Слот пуст.'); break; }
-      const key = player.equipment[slot];
-      if (!canAddToInventory(player, key)) { addLog(player, 'Нет места в инвентаре.'); break; }
-      addItem(player.inventory, key, 1);
-      player.equipment[slot] = null;
-      addLog(player, `Вы сняли предмет: ${ITEMS[key].name}.`);
+      const slot = msg.slot; if (!player.equipment[slot]) { addLog(player, 'Слот пуст.'); break; }
+      if (!canAddToInventory(player, player.equipment[slot])) { addLog(player, 'Нет места в инвентаре.'); break; }
+      if (isBusy(player)) { addLog(player, `Вы заняты: ${player.busyAction}.`); pushState(player); break; }
+      beginBusy(player, 200, 'Снятие', () => {
+        const key = player.equipment[slot]; addItem(player.inventory, key, 1); player.equipment[slot] = null; addLog(player, `Снято: ${ITEMS[key].name}.`);
+        touch(player);
+      });
       pushState(player);
       break;
     }
@@ -519,10 +592,10 @@ function handleMessage(player, msg) {
       const price = priceFor(itemKey) * q;
       if (player.gold < price) { addLog(player, `Недостаточно золота. Нужно ${price}.`); break; }
       if (!canAddToInventory(player, itemKey) && !player.inventory[itemKey]) { addLog(player, 'Нет места в инвентаре.'); break; }
-      player.gold -= price;
-      addItem(player.inventory, itemKey, q);
-      adjustDemand(itemKey, +0.05);
-      addLog(player, `Покупка: ${ITEMS[itemKey].name} x${q} за ${price}.`);
+      if (isBusy(player)) { addLog(player, `Вы заняты: ${player.busyAction}.`); pushState(player); break; }
+      beginBusy(player, 250, 'Покупка', () => {
+        player.gold -= price; addItem(player.inventory, itemKey, q); adjustDemand(itemKey, +0.05); addLog(player, `Покупка: ${ITEMS[itemKey].name} x${q} за ${price}.`); touch(player);
+      });
       pushState(player);
       break;
     }
@@ -532,77 +605,69 @@ function handleMessage(player, msg) {
       const m = MERCHANTS.find(x => x.key === merchantKey);
       if (!m) { addLog(player, 'Торговец не найден.'); break; }
       if (!canMerchantBuy(m, itemKey)) { addLog(player, 'Этот торговец не покупает такой товар.'); break; }
-      const have = player.inventory[itemKey] || 0;
-      if (have <= 0) { addLog(player, 'Нет товара для продажи.'); break; }
+      const have = player.inventory[itemKey] || 0; if (have <= 0) { addLog(player, 'Нет товара для продажи.'); break; }
       const q = clamp(Math.floor(qty || 1), 1, have);
       const price = priceFor(itemKey) * q;
-      addItem(player.inventory, itemKey, -q);
-      player.gold += price;
-      adjustDemand(itemKey, -0.05);
-      addLog(player, `Продажа: ${ITEMS[itemKey].name} x${q} за ${price}.`);
+      if (isBusy(player)) { addLog(player, `Вы заняты: ${player.busyAction}.`); pushState(player); break; }
+      beginBusy(player, 250, 'Продажа', () => {
+        addItem(player.inventory, itemKey, -q); player.gold += price; adjustDemand(itemKey, -0.05); addLog(player, `Продажа: ${ITEMS[itemKey].name} x${q} за ${price}.`); touch(player);
+      });
       pushState(player);
       break;
     }
     case 'store': {
       if (player.location !== 'city') { addLog(player, 'Склад доступен только в городе.'); break; }
-      const { itemKey, qty } = msg;
-      const have = player.inventory[itemKey] || 0;
-      if (have <= 0) { addLog(player, 'Нет предметов для перемещения на склад.'); break; }
+      const { itemKey, qty } = msg; const have = player.inventory[itemKey] || 0; if (have <= 0) { addLog(player, 'Нет предметов для склада.'); break; }
       const q = clamp(Math.floor(qty || 1), 1, have);
-      addItem(player.inventory, itemKey, -q);
-      addItem(player.storage, itemKey, q);
-      addLog(player, `Перемещено на склад: ${ITEMS[itemKey].name} x${q}.`);
+      if (isBusy(player)) { addLog(player, `Вы заняты: ${player.busyAction}.`); pushState(player); break; }
+      beginBusy(player, 250, 'Перемещение на склад', () => { addItem(player.inventory, itemKey, -q); addItem(player.storage, itemKey, q); addLog(player, `На склад: ${ITEMS[itemKey].name} x${q}.`); touch(player); });
       pushState(player);
       break;
     }
     case 'withdraw': {
       if (player.location !== 'city') { addLog(player, 'Склад доступен только в городе.'); break; }
-      const { itemKey, qty } = msg;
-      const have = player.storage[itemKey] || 0;
-      if (have <= 0) { addLog(player, 'Нет предметов на складе.'); break; }
+      const { itemKey, qty } = msg; const have = player.storage[itemKey] || 0; if (have <= 0) { addLog(player, 'Нет предметов на складе.'); break; }
       const q = clamp(Math.floor(qty || 1), 1, have);
       if (!canAddToInventory(player, itemKey) && !player.inventory[itemKey]) { addLog(player, 'Нет места в инвентаре.'); break; }
-      addItem(player.storage, itemKey, -q);
-      addItem(player.inventory, itemKey, q);
-      addLog(player, `Забрано со склада: ${ITEMS[itemKey].name} x${q}.`);
+      if (isBusy(player)) { addLog(player, `Вы заняты: ${player.busyAction}.`); pushState(player); break; }
+      beginBusy(player, 250, 'Забор со склада', () => { addItem(player.storage, itemKey, -q); addItem(player.inventory, itemKey, q); addLog(player, `Со склада: ${ITEMS[itemKey].name} x${q}.`); touch(player); });
       pushState(player);
       break;
     }
     case 'gather': {
-      const { which } = msg; // 'mine' | 'chop' | 'fish' | 'forage' | 'hunt'
       if (player.location !== 'fields') { addLog(player, 'Добывать ресурсы можно в Ремесленных угодьях.'); break; }
-      const map = { mine: ['ore', 'pickaxe'], chop: ['wood', 'axe'], fish: ['fish', 'rod'], forage: ['herb', 'sickle'], hunt: ['hide', 'knife'] };
-      const pair = map[which];
-      if (!pair) { addLog(player, 'Неизвестный тип добычи.'); break; }
-      const [resKey, toolSlot] = pair;
-      const p = calculateGatherChance(player, toolSlot);
-      if (chance(p)) {
-        const qty = randInt(1, 3);
-        if (canAddToInventory(player, resKey) || player.inventory[resKey]) {
-          addItem(player.inventory, resKey, qty);
-          addLog(player, `Успех! Добыто ${ITEMS[resKey].name} x${qty}.`);
+      if (isBusy(player)) { addLog(player, `Вы заняты: ${player.busyAction}.`); pushState(player); break; }
+      const map = { mine: ['ore', 'pickaxe', 'mining'], chop: ['wood', 'axe', 'woodcutting'], fish: ['fish', 'rod', 'fishing'], forage: ['herb', 'sickle', 'herbalism'], hunt: ['hide', 'knife', 'hunting'] };
+      const pair = map[msg.which]; if (!pair) { addLog(player, 'Неизвестный тип добычи.'); break; }
+      const [resKey, toolSlot, skillKey] = pair;
+      beginBusy(player, 1200, 'Добыча', () => {
+        const p = calculateGatherChance(player, toolSlot, skillKey);
+        if (chance(p)) {
+          const qty = randInt(1, 3);
+          if (canAddToInventory(player, resKey) || player.inventory[resKey]) { addItem(player.inventory, resKey, qty); addLog(player, `Успех! Добыто ${ITEMS[resKey].name} x${qty}.`); addSkillXp(player, skillKey, 16); }
+          else { addLog(player, `Нет места для ${ITEMS[resKey].name}.`); }
         } else {
-          addLog(player, `Нет места для ${ITEMS[resKey].name}.`);
+          addLog(player, 'Неудача. Ничего не добыто.'); addSkillXp(player, skillKey, 7);
         }
-      } else {
-        addLog(player, 'Неудача. Ничего не добыто.');
-      }
+        touch(player);
+      });
       pushState(player);
       break;
     }
     case 'craft': {
       if (player.location !== 'fields' && player.location !== 'city') { addLog(player, 'Крафт доступен в городе и в угодьях.'); break; }
-      const rec = RECIPES.find(r => r.key === msg.recipeKey);
-      if (!rec) { addLog(player, 'Неизвестный рецепт.'); break; }
+      const rec = RECIPES.find(r => r.key === msg.recipeKey); if (!rec) { addLog(player, 'Неизвестный рецепт.'); break; }
       const qty = clamp(Math.floor(msg.qty || 1), 1, 99);
-      // Check resources
-      for (const [k, v] of Object.entries(rec.inputs)) {
-        if ((player.inventory[k] || 0) < v * qty) { addLog(player, 'Недостаточно ресурсов.'); pushState(player); return; }
-      }
-      for (const [k, v] of Object.entries(rec.inputs)) addItem(player.inventory, k, -v * qty);
+      for (const [k, v] of Object.entries(rec.inputs)) { if ((player.inventory[k] || 0) < v * qty) { addLog(player, 'Недостаточно ресурсов.'); pushState(player); return; } }
       if (!canAddToInventory(player, rec.out) && !player.inventory[rec.out]) { addLog(player, 'Нет места для результата.'); pushState(player); return; }
-      addItem(player.inventory, rec.out, rec.qty * qty);
-      addLog(player, `Создано: ${ITEMS[rec.out].name} x${rec.qty * qty}.`);
+      if (isBusy(player)) { addLog(player, `Вы заняты: ${player.busyAction}.`); pushState(player); break; }
+      const ms = Math.min(3500, 500 + 300 * qty);
+      beginBusy(player, ms, 'Крафт', () => {
+        for (const [k, v] of Object.entries(rec.inputs)) addItem(player.inventory, k, -v * qty);
+        addItem(player.inventory, rec.out, rec.qty * qty);
+        addLog(player, `Создано: ${ITEMS[rec.out].name} x${rec.qty * qty}.`);
+        touch(player);
+      });
       pushState(player);
       break;
     }
@@ -611,6 +676,7 @@ function handleMessage(player, msg) {
   }
 }
 
+await loadPlayers();
 server.listen(PORT, () => {
   console.log(`Text RPG server running at http://localhost:${PORT}`);
 });
