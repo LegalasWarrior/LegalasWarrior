@@ -64,9 +64,9 @@ const ITEMS = {
   moon_sickle: { key: 'moon_sickle', name: 'Лунный серп', type: 'tool', tool: 'sickle', tier: 3, gatherSpeed: 0.28, gatherLuck: 0.16, basePrice: 480 },
 
   // Consumables
-  small_potion: { key: 'small_potion', name: 'Малая лечебная настойка', type: 'consumable', heal: 30, basePrice: 40 },
-  mid_potion: { key: 'mid_potion', name: 'Средняя лечебная настойка', type: 'consumable', heal: 70, basePrice: 110 },
-  big_potion: { key: 'big_potion', name: 'Большая лечебная настойка', type: 'consumable', heal: 140, basePrice: 240 },
+  small_potion: { key: 'small_potion', name: 'Малая лечебная настойка', type: 'consumable', heal: 30, basePrice: 20 },
+  mid_potion: { key: 'mid_potion', name: 'Средняя лечебная настойка', type: 'consumable', heal: 70, basePrice: 60 },
+  big_potion: { key: 'big_potion', name: 'Большая лечебная настойка', type: 'consumable', heal: 140, basePrice: 120 },
 
   // Resources & materials & junk as before
   ore: { key: 'ore', name: 'Руда', type: 'resource', basePrice: 14 },
@@ -320,15 +320,19 @@ function calculateGatherChance(player, toolType, skillKey) {
   const tool = key ? ITEMS[key] : null;
   const tier = tool ? (tool.tier || 0) : 0;
   const skillLvl = player.skills[skillKey]?.level || 1;
-  let chance = 0.25 + tier * 0.15 + (skillLvl - 1) * 0.05 + (tool?.gatherLuck || 0);
+  let chance = 0.25 + tier * 0.15 + (skillLvl - 1) * 0.025 + (tool?.gatherLuck || 0);
   return clamp(chance, 0.2, 0.97);
 }
 
 // Economy
-const demandFactor = new Map(); // itemKey -> factor
-function getDemandFactor(itemKey) { if (!demandFactor.has(itemKey)) demandFactor.set(itemKey, 1); return demandFactor.get(itemKey); }
-function adjustDemand(itemKey, delta) { demandFactor.set(itemKey, clamp(getDemandFactor(itemKey) + delta, 0.6, 1.8)); }
-function priceFor(itemKey) { const it = ITEMS[itemKey]; if (!it) return 0; return Math.max(1, Math.round(it.basePrice * getDemandFactor(itemKey))); }
+// Separate buy/sell market factors
+const buyFactor = new Map();
+const sellFactor = new Map();
+function getFactor(map, key) { if (!map.has(key)) map.set(key, 1); return map.get(key); }
+function adjustBuy(itemKey, delta) { buyFactor.set(itemKey, clamp(getFactor(buyFactor, itemKey) + delta, 0.8, 2.2)); }
+function adjustSell(itemKey, delta) { sellFactor.set(itemKey, clamp(getFactor(sellFactor, itemKey) + delta, 0.5, 1.2)); }
+function buyPriceFor(itemKey) { const it = ITEMS[itemKey]; if (!it) return 0; return Math.max(1, Math.round(it.basePrice * getFactor(buyFactor, itemKey))); }
+function sellPriceFor(itemKey) { const it = ITEMS[itemKey]; if (!it) return 0; const base = Math.max(1, Math.round(it.basePrice * 0.6)); return Math.max(1, Math.round(base * getFactor(sellFactor, itemKey))); }
 
 const MERCHANTS = [
   { key: 'general', name: 'Лавка ремесленника', sells: ['small_potion', 'mid_potion', 'crude_pickaxe', 'crude_axe', 'twig_rod', 'field_knife', 'hand_sickle'], buys: 'all' },
@@ -336,7 +340,7 @@ const MERCHANTS = [
   { key: 'trader', name: 'Скупщик ресурсов', sells: [], buys: ['resource', 'material'] },
 ];
 function canMerchantBuy(merchant, itemKey) { if (merchant.buys === 'all') return true; const t = ITEMS[itemKey]?.type; return t ? merchant.buys.includes(t) : false; }
-function merchantSells(merchant) { return merchant.sells.map(k => ({ key: k, name: ITEMS[k].name, price: priceFor(k) })); }
+function merchantSells(merchant) { return merchant.sells.map(k => ({ key: k, name: ITEMS[k].name, price: buyPriceFor(k) })); }
 
 // Busy handling
 function isBusy(player) { return Date.now() < player.busyUntil; }
@@ -398,8 +402,9 @@ function sanitizePlayer(p) {
 function pushState(player) {
   const catalog = CATALOG;
   const merchants = MERCHANTS.map(m => ({ key: m.key, name: m.name, sells: merchantSells(m), buys: m.buys }));
-  const prices = Object.fromEntries(Object.keys(ITEMS).map(k => [k, priceFor(k)]));
-  const msg = { type: 'state', you: sanitizePlayer(player), meta: { locations: LOCATIONS, merchants, recipes: RECIPES, prices, catalog } };
+  const buyPrices = Object.fromEntries(Object.keys(ITEMS).map(k => [k, buyPriceFor(k)]));
+  const sellPrices = Object.fromEntries(Object.keys(ITEMS).map(k => [k, sellPriceFor(k)]));
+  const msg = { type: 'state', you: sanitizePlayer(player), meta: { locations: LOCATIONS, merchants, recipes: RECIPES, buyPrices, sellPrices, catalog } };
   const ws = sockets.get(player.id);
   if (ws && ws.readyState === ws.OPEN) ws.send(JSON.stringify(msg));
 }
@@ -601,12 +606,12 @@ function handleMessage(player, msg) {
       if (!m) { addLog(player, 'Торговец не найден.'); break; }
       if (!m.sells.includes(itemKey)) { addLog(player, 'Этот торговец не продаёт такой товар.'); break; }
       const q = clamp(Math.floor(qty || 1), 1, 99);
-      const price = priceFor(itemKey) * q;
+      const price = buyPriceFor(itemKey) * q;
       if (player.gold < price) { addLog(player, `Недостаточно золота. Нужно ${price}.`); break; }
       if (!canAddToInventory(player, itemKey) && !player.inventory[itemKey]) { addLog(player, 'Нет места в инвентаре.'); break; }
       if (isBusy(player)) { addLog(player, `Вы заняты: ${player.busyAction}.`); pushState(player); break; }
       beginBusy(player, 250, 'Покупка', () => {
-        player.gold -= price; addItem(player.inventory, itemKey, q); adjustDemand(itemKey, +0.05); addLog(player, `Покупка: ${ITEMS[itemKey].name} x${q} за ${price}.`); touch(player);
+        player.gold -= price; addItem(player.inventory, itemKey, q); adjustBuy(itemKey, +0.05); addLog(player, `Покупка: ${ITEMS[itemKey].name} x${q} за ${price}.`); touch(player);
       });
       pushState(player);
       break;
@@ -619,10 +624,10 @@ function handleMessage(player, msg) {
       if (!canMerchantBuy(m, itemKey)) { addLog(player, 'Этот торговец не покупает такой товар.'); break; }
       const have = player.inventory[itemKey] || 0; if (have <= 0) { addLog(player, 'Нет товара для продажи.'); break; }
       const q = clamp(Math.floor(qty || 1), 1, have);
-      const price = priceFor(itemKey) * q;
+      const price = sellPriceFor(itemKey) * q;
       if (isBusy(player)) { addLog(player, `Вы заняты: ${player.busyAction}.`); pushState(player); break; }
       beginBusy(player, 250, 'Продажа', () => {
-        addItem(player.inventory, itemKey, -q); player.gold += price; adjustDemand(itemKey, -0.05); addLog(player, `Продажа: ${ITEMS[itemKey].name} x${q} за ${price}.`); touch(player);
+        addItem(player.inventory, itemKey, -q); player.gold += price; adjustSell(itemKey, -0.05); addLog(player, `Продажа: ${ITEMS[itemKey].name} x${q} за ${price}.`); touch(player);
       });
       pushState(player);
       break;
@@ -656,7 +661,7 @@ function handleMessage(player, msg) {
       const tool = toolKey ? ITEMS[toolKey] : null;
       const skillLvl = player.skills[skillKey]?.level || 1;
       const baseMs = 1200;
-      const skillSpeed = Math.min(0.5, (skillLvl - 1) * 0.02);
+      const skillSpeed = Math.min(0.5, (skillLvl - 1) * 0.01);
       const toolSpeed = tool?.gatherSpeed || 0;
       const ms = Math.max(500, Math.floor(baseMs * (1 - toolSpeed) * (1 - skillSpeed)));
       beginBusy(player, ms, 'Добыча', () => {
@@ -664,7 +669,7 @@ function handleMessage(player, msg) {
         if (chance(p)) {
           let qty = randInt(1, 3);
           // Extra yield chance with tool luck and skill
-          const extraChance = (tool?.gatherLuck || 0) + Math.min(0.25, (skillLvl - 1) * 0.01);
+          const extraChance = (tool?.gatherLuck || 0) + Math.min(0.25, (skillLvl - 1) * 0.005);
           if (Math.random() < extraChance) qty += 1;
           if (canAddToInventory(player, resKey) || player.inventory[resKey]) { addItem(player.inventory, resKey, qty); addLog(player, `Успех! Добыто ${ITEMS[resKey].name} x${qty}.`); addSkillXp(player, skillKey, 16); }
           else { addLog(player, `Нет места для ${ITEMS[resKey].name}.`); }
@@ -677,7 +682,7 @@ function handleMessage(player, msg) {
       break;
     }
     case 'craft': {
-      if (player.location !== 'fields' && player.location !== 'city') { addLog(player, 'Крафт доступен в городе и в угодьях.'); break; }
+      if (player.location !== 'city') { addLog(player, 'Крафт доступен только в центральном городе.'); break; }
       const rec = RECIPES.find(r => r.key === msg.recipeKey); if (!rec) { addLog(player, 'Неизвестный рецепт.'); break; }
       const qty = clamp(Math.floor(msg.qty || 1), 1, 99);
       for (const [k, v] of Object.entries(rec.inputs)) { if ((player.inventory[k] || 0) < v * qty) { addLog(player, 'Недостаточно ресурсов.'); pushState(player); return; } }

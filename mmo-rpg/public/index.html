@@ -12,6 +12,12 @@
       <div class="brand">Текстовая RPG</div>
       <div class="location">Локация: <span id="locName">—</span></div>
       <div class="actions" id="topActions"></div>
+      <div class="actions">
+        <button id="openInv">Инвентарь</button>
+        <button id="openStorage">Склад</button>
+        <button id="openTrade">Торговля</button>
+        <button id="openCraft">Крафт</button>
+      </div>
     </header>
 
     <main class="layout">
@@ -60,27 +66,20 @@
           <div class="equip grid2" id="equip"></div>
         </div>
 
-        <div class="tabs">
-          <button class="tab active" data-tab="inv">Инвентарь</button>
-          <button class="tab" data-tab="storage">Склад</button>
-          <button class="tab" data-tab="trade">Торговля</button>
-          <button class="tab" data-tab="craft">Крафт</button>
-        </div>
-        <div class="panel tabc active" id="tab-inv">
-          <div id="inventory"></div>
-        </div>
-        <div class="panel tabc" id="tab-storage">
-          <div id="storage"></div>
-        </div>
-        <div class="panel tabc" id="tab-trade">
-          <div id="trade"></div>
-        </div>
-        <div class="panel tabc" id="tab-craft">
-          <div id="craft"></div>
+        <div class="panel">
+          <h3>Навыки</h3>
+          <div id="skills" class="list"></div>
         </div>
       </section>
     </main>
   </div>
+
+  <!-- Modals -->
+  <div class="modal-overlay" id="modalInv"><div class="modal"><div class="header"><h3>Инвентарь</h3><button class="close" data-close="modalInv">Закрыть</button></div><div id="inventory"></div></div></div>
+  <div class="modal-overlay" id="modalStorage"><div class="modal"><div class="header"><h3>Склад</h3><button class="close" data-close="modalStorage">Закрыть</button></div><div id="storage"></div></div></div>
+  <div class="modal-overlay" id="modalTrade"><div class="modal"><div class="header"><h3>Торговля</h3><button class="close" data-close="modalTrade">Закрыть</button></div><div id="trade"></div></div></div>
+  <div class="modal-overlay" id="modalCraft"><div class="modal"><div class="header"><h3>Крафт</h3><button class="close" data-close="modalCraft">Закрыть</button></div><div id="craft"></div></div></div>
+
   <script src="/client.js" type="module"></script>
 </body>
 </html>
