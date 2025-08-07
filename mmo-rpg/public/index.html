@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Текстовая RPG</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">Текстовая RPG</div>
+      <div class="location">Локация: <span id="locName">—</span></div>
+      <div class="actions" id="topActions"></div>
+      <div class="actions">
+        <button id="openInv">Инвентарь</button>
+        <button id="openStorage">Склад</button>
+        <button id="openTrade">Торговля</button>
+        <button id="openCraft">Крафт</button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <section class="left">
+        <div class="panel">
+          <h3>Журнал</h3>
+          <div id="log" class="log"></div>
+        </div>
+        <div class="panel" id="combatPanel" style="display:none;">
+          <h3>Бой</h3>
+          <div id="combatInfo">—</div>
+          <div class="row">
+            <button id="btnAttack">Атаковать</button>
+            <button id="btnFlee">Сбежать</button>
+          </div>
+        </div>
+        <div class="panel" id="gatherPanel" style="display:none;">
+          <div class="panel-head"><h3>Добыча ресурсов</h3><span id="gatherBusy"></span></div>
+          <div class="row">
+            <button data-gather="mine">Добыть руду</button>
+            <button data-gather="chop">Рубить дерево</button>
+            <button data-gather="fish">Ловить рыбу</button>
+            <button data-gather="forage">Собирать травы</button>
+            <button data-gather="hunt">Охотиться</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="right">
+        <div class="panel">
+          <h3>Персонаж</h3>
+          <div class="grid2">
+            <div>Имя</div><div id="pName">—</div>
+            <div>Уровень</div><div id="pLevel">—</div>
+            <div>Опыт</div><div id="pXp">—</div>
+            <div>Здоровье</div><div id="pHp">—</div>
+            <div>Золото</div><div id="pGold">—</div>
+          </div>
+          <div class="row">
+            <button id="btnHeal">Лечиться</button>
+          </div>
+        </div>
+
+        <div class="panel">
+          <h3>Снаряжение</h3>
+          <div class="equip grid2" id="equip"></div>
+        </div>
+
+        <div class="panel">
+          <h3>Навыки</h3>
+          <div id="skills" class="list"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- Modals -->
+  <div class="modal-overlay" id="modalInv"><div class="modal"><div class="header"><h3>Инвентарь</h3><button class="close" data-close="modalInv">Закрыть</button></div><div id="inventory"></div></div></div>
+  <div class="modal-overlay" id="modalStorage"><div class="modal"><div class="header"><h3>Склад</h3><button class="close" data-close="modalStorage">Закрыть</button></div><div id="storage"></div></div></div>
+  <div class="modal-overlay" id="modalTrade"><div class="modal"><div class="header"><h3>Торговля</h3><button class="close" data-close="modalTrade">Закрыть</button></div><div id="trade"></div></div></div>
+  <div class="modal-overlay" id="modalCraft"><div class="modal"><div class="header"><h3>Крафт</h3><button class="close" data-close="modalCraft">Закрыть</button></div><div id="craft"></div></div></div>
+
+  <script src="/client.js" type="module"></script>
+</body>
+</html>

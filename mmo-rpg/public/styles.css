@@ -1,0 +1,51 @@
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; height: 100%; background: #0d1117; color: #e6edf3; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; }
+button { background: #1f6feb; color: #fff; border: 1px solid rgba(255,255,255,0.15); padding: 8px 10px; border-radius: 8px; cursor: pointer; }
+button:hover { background: #2b7cff; }
+button:disabled { opacity: 0.6; cursor: not-allowed; }
+.app { max-width: 1300px; margin: 0 auto; }
+.topbar { display: flex; align-items: center; gap: 16px; padding: 12px; border-bottom: 1px solid #30363d; position: sticky; top: 0; background: rgba(13,17,23,0.9); backdrop-filter: blur(6px); min-height: 60px; margin-bottom: 16px; }
+.brand { font-weight: 700; color: #a3d0ff; }
+.location { display: flex; align-items: center; min-height: 24px; }
+.actions { margin-left: auto; display: flex; gap: 8px; }
+.layout { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 14px; padding: 14px; }
+.panel { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); border-radius: 10px; padding: 10px; }
+.panel h3 { margin: 0 0 8px 0; font-size: 16px; color: #a3d0ff; }
+.log { height: 420px; overflow: auto; font-size: 13px; background: #0a1220; border: 1px solid #1f2630; padding: 8px; border-radius: 6px; display: flex; flex-direction: column-reverse; }
+.row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; }
+.tabs { display: flex; gap: 8px; margin-top: 10px; }
+.tab { background: #21262d; border: 1px solid #30363d; color: #c9d1d9; }
+.tab.active { background: #1f6feb; border-color: #2b7cff; color: #fff; }
+.tabc { display: none; margin-top: 10px; }
+.tabc.active { display: block; }
+.list { display: grid; grid-template-columns: 1fr auto auto; gap: 6px 8px; align-items: center; font-size: 14px; }
+.badge { display: inline-block; background: #21262d; border: 1px solid #30363d; padding: 2px 6px; border-radius: 6px; font-size: 12px; color: #aab7c4; }
+.small { font-size: 12px; opacity: 0.85; }
+hr { border: none; border-top: 1px solid #30363d; margin: 8px 0; }
+.tooltip { position: relative; cursor: help; border-bottom: 1px dotted #6e7681; }
+.tooltip .tip { visibility: hidden; opacity: 0; transition: opacity .15s; position: absolute; z-index: 20; bottom: 125%; left: 0; background: #0a1220; border: 1px solid #1f2630; border-radius: 8px; padding: 8px; color: #c9d1d9; min-width: 220px; box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+.tooltip:hover .tip { visibility: visible; opacity: 1; }
+.pill { display: inline-block; padding: 2px 8px; border-radius: 999px; background: #21262d; border: 1px solid #30363d; font-size: 12px; color: #aab7c4; }
+.type-weapon { background: #2a3b5f; border-color: #3e5585; color: #a3c2ff; }
+.type-armor { background: #2a4b3a; border-color: #3d6b55; color: #9fe0bf; }
+.type-tool { background: #4b3a2a; border-color: #6b553d; color: #e0c49f; }
+.type-resource { background: #3a2a4b; border-color: #553d6b; color: #c9a3ff; }
+.type-material { background: #3a374b; border-color: #56506b; color: #d3c7ff; }
+.type-consumable { background: #2a4b4b; border-color: #3d6b6b; color: #9fe0e0; }
+.type-junk { background: #3f3f3f; border-color: #595959; color: #cfcfcf; }
+
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: none; align-items: center; justify-content: center; z-index: 100; }
+.modal { background: #0d1117; border: 1px solid #30363d; border-radius: 12px; max-width: 900px; width: 90%; max-height: 80vh; overflow: auto; padding: 12px; box-shadow: 0 12px 40px rgba(0,0,0,0.5); }
+.modal .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.modal .header h3 { margin: 0; }
+.modal .close { background: #21262d; border: 1px solid #30363d; }
+.show { display: flex; }
+.panel-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.panel-head h3 { margin: 0; }
+#gatherBusy { min-width: 120px; text-align: right; opacity: 0.9; }
+.rarity-common { filter: none; }
+.rarity-uncommon { box-shadow: inset 0 0 0 1px #58a6ff; }
+.rarity-rare { box-shadow: inset 0 0 0 1px #a371f7; }
+.rarity-epic { box-shadow: inset 0 0 0 1px #da5b76; }
+.rarity-legendary { box-shadow: inset 0 0 0 1px #e3b341; }
