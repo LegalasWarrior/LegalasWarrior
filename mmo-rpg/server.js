@@ -99,30 +99,9 @@ const RECIPES = [
   { key: 'mid_potion', name: 'Варить среднюю настойку', out: 'mid_potion', qty: 1, inputs: { tincture: 2, herb: 1 } },
 ];
 
-// Demand-driven economy factors
-const demandFactor = new Map(); // itemKey -> factor
-function getDemandFactor(itemKey) {
-  if (!demandFactor.has(itemKey)) demandFactor.set(itemKey, 1);
-  return demandFactor.get(itemKey);
-}
-function adjustDemand(itemKey, delta) {
-  const current = getDemandFactor(itemKey);
-  const next = Math.max(0.6, Math.min(1.8, current + delta));
-  demandFactor.set(itemKey, next);
-}
-function priceFor(itemKey) {
-  const item = ITEMS[itemKey];
-  if (!item) return 0;
-  const p = Math.round(item.basePrice * getDemandFactor(itemKey));
-  return Math.max(1, p);
-}
+// Demand-driven economy factors (defined later in a single place)
+// Placeholder declarations removed to avoid duplication
 
-// Merchants in the city
-const MERCHANTS = [
-  { key: 'general', name: 'Лавка ремесленника', sells: ['small_potion', 'mid_potion', 'crude_pickaxe', 'crude_axe', 'twig_rod', 'field_knife', 'hand_sickle'], buys: 'all' },
-  { key: 'armorer', name: 'Оружейник', sells: ['rusty_dagger', 'bronze_sword', 'cloth_garb', 'leather_armor'], buys: ['weapon', 'armor', 'junk'] },
-  { key: 'trader', name: 'Скупщик ресурсов', sells: [], buys: ['resource', 'material'] },
-];
 
 // 50 mobs across combat locations
 const MOBS = [
