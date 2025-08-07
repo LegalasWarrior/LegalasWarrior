@@ -32,38 +32,43 @@ const LOCATIONS = [
 ];
 
 const ITEMS = {
-  rusty_dagger: { key: 'rusty_dagger', name: 'Ржавый кинжал', type: 'weapon', atk: 4, basePrice: 20 },
-  bronze_sword: { key: 'bronze_sword', name: 'Бронзовый меч', type: 'weapon', atk: 7, basePrice: 80 },
-  iron_sword: { key: 'iron_sword', name: 'Железный меч', type: 'weapon', atk: 11, basePrice: 180 },
-  steel_sword: { key: 'steel_sword', name: 'Стальной меч', type: 'weapon', atk: 16, basePrice: 400 },
-  mythril_blade: { key: 'mythril_blade', name: 'Мифриловый клинок', type: 'weapon', atk: 24, basePrice: 1200 },
+  // Weapons with crit and speed
+  rusty_dagger: { key: 'rusty_dagger', name: 'Ржавый кинжал', type: 'weapon', atk: 4, critChance: 0.05, critMult: 1.5, attackSpeed: 0.05, basePrice: 20 },
+  bronze_sword: { key: 'bronze_sword', name: 'Бронзовый меч', type: 'weapon', atk: 7, critChance: 0.06, critMult: 1.6, attackSpeed: 0.08, basePrice: 80 },
+  iron_sword: { key: 'iron_sword', name: 'Железный меч', type: 'weapon', atk: 11, critChance: 0.08, critMult: 1.7, attackSpeed: 0.12, basePrice: 180 },
+  steel_sword: { key: 'steel_sword', name: 'Стальной меч', type: 'weapon', atk: 16, critChance: 0.10, critMult: 1.8, attackSpeed: 0.16, basePrice: 400 },
+  mythril_blade: { key: 'mythril_blade', name: 'Мифриловый клинок', type: 'weapon', atk: 24, critChance: 0.12, critMult: 2.0, attackSpeed: 0.22, basePrice: 1200 },
 
-  cloth_garb: { key: 'cloth_garb', name: 'Тканевый наряд', type: 'armor', def: 2, basePrice: 25 },
-  leather_armor: { key: 'leather_armor', name: 'Кожаная броня', type: 'armor', def: 5, basePrice: 110 },
-  chainmail: { key: 'chainmail', name: 'Кольчуга', type: 'armor', def: 9, basePrice: 260 },
-  plate_armor: { key: 'plate_armor', name: 'Латы', type: 'armor', def: 14, basePrice: 600 },
-  dragonscale: { key: 'dragonscale', name: 'Драконья чешуя (доспех)', type: 'armor', def: 22, basePrice: 1600 },
+  // Armor with damage reduction
+  cloth_garb: { key: 'cloth_garb', name: 'Тканевый наряд', type: 'armor', def: 2, dmgReduction: 0.02, basePrice: 25 },
+  leather_armor: { key: 'leather_armor', name: 'Кожаная броня', type: 'armor', def: 5, dmgReduction: 0.05, basePrice: 110 },
+  chainmail: { key: 'chainmail', name: 'Кольчуга', type: 'armor', def: 9, dmgReduction: 0.08, basePrice: 260 },
+  plate_armor: { key: 'plate_armor', name: 'Латы', type: 'armor', def: 14, dmgReduction: 0.12, basePrice: 600 },
+  dragonscale: { key: 'dragonscale', name: 'Драконья чешуя (доспех)', type: 'armor', def: 22, dmgReduction: 0.18, basePrice: 1600 },
 
-  crude_pickaxe: { key: 'crude_pickaxe', name: 'Грубая кирка', type: 'tool', tool: 'pickaxe', tier: 1, basePrice: 60 },
-  sturdy_pickaxe: { key: 'sturdy_pickaxe', name: 'Крепкая кирка', type: 'tool', tool: 'pickaxe', tier: 2, basePrice: 180 },
-  master_pickaxe: { key: 'master_pickaxe', name: 'Мастерская кирка', type: 'tool', tool: 'pickaxe', tier: 3, basePrice: 520 },
-  crude_axe: { key: 'crude_axe', name: 'Грубый топор', type: 'tool', tool: 'axe', tier: 1, basePrice: 60 },
-  sturdy_axe: { key: 'sturdy_axe', name: 'Крепкий топор', type: 'tool', tool: 'axe', tier: 2, basePrice: 180 },
-  master_axe: { key: 'master_axe', name: 'Мастерский топор', type: 'tool', tool: 'axe', tier: 3, basePrice: 520 },
-  twig_rod: { key: 'twig_rod', name: 'Ветвистая удочка', type: 'tool', tool: 'rod', tier: 1, basePrice: 50 },
-  fiber_rod: { key: 'fiber_rod', name: 'Фибровая удочка', type: 'tool', tool: 'rod', tier: 2, basePrice: 150 },
-  crystal_rod: { key: 'crystal_rod', name: 'Кристаллическая удочка', type: 'tool', tool: 'rod', tier: 3, basePrice: 480 },
-  field_knife: { key: 'field_knife', name: 'Полевой нож', type: 'tool', tool: 'knife', tier: 1, basePrice: 50 },
-  hunter_knife: { key: 'hunter_knife', name: 'Охотничий нож', type: 'tool', tool: 'knife', tier: 2, basePrice: 150 },
-  butcher_knife: { key: 'butcher_knife', name: 'Разделочный нож', type: 'tool', tool: 'knife', tier: 3, basePrice: 480 },
-  hand_sickle: { key: 'hand_sickle', name: 'Ручной серп', type: 'tool', tool: 'sickle', tier: 1, basePrice: 50 },
-  iron_sickle: { key: 'iron_sickle', name: 'Железный серп', type: 'tool', tool: 'sickle', tier: 2, basePrice: 150 },
-  moon_sickle: { key: 'moon_sickle', name: 'Лунный серп', type: 'tool', tool: 'sickle', tier: 3, basePrice: 480 },
+  // Tools with gather speed and luck
+  crude_pickaxe: { key: 'crude_pickaxe', name: 'Грубая кирка', type: 'tool', tool: 'pickaxe', tier: 1, gatherSpeed: 0.10, gatherLuck: 0.05, basePrice: 60 },
+  sturdy_pickaxe: { key: 'sturdy_pickaxe', name: 'Крепкая кирка', type: 'tool', tool: 'pickaxe', tier: 2, gatherSpeed: 0.20, gatherLuck: 0.10, basePrice: 180 },
+  master_pickaxe: { key: 'master_pickaxe', name: 'Мастерская кирка', type: 'tool', tool: 'pickaxe', tier: 3, gatherSpeed: 0.35, gatherLuck: 0.15, basePrice: 520 },
+  crude_axe: { key: 'crude_axe', name: 'Грубый топор', type: 'tool', tool: 'axe', tier: 1, gatherSpeed: 0.10, gatherLuck: 0.05, basePrice: 60 },
+  sturdy_axe: { key: 'sturdy_axe', name: 'Крепкий топор', type: 'tool', tool: 'axe', tier: 2, gatherSpeed: 0.20, gatherLuck: 0.10, basePrice: 180 },
+  master_axe: { key: 'master_axe', name: 'Мастерский топор', type: 'tool', tool: 'axe', tier: 3, gatherSpeed: 0.35, gatherLuck: 0.15, basePrice: 520 },
+  twig_rod: { key: 'twig_rod', name: 'Ветвистая удочка', type: 'tool', tool: 'rod', tier: 1, gatherSpeed: 0.08, gatherLuck: 0.06, basePrice: 50 },
+  fiber_rod: { key: 'fiber_rod', name: 'Фибровая удочка', type: 'tool', tool: 'rod', tier: 2, gatherSpeed: 0.16, gatherLuck: 0.12, basePrice: 150 },
+  crystal_rod: { key: 'crystal_rod', name: 'Кристаллическая удочка', type: 'tool', tool: 'rod', tier: 3, gatherSpeed: 0.28, gatherLuck: 0.18, basePrice: 480 },
+  field_knife: { key: 'field_knife', name: 'Полевой нож', type: 'tool', tool: 'knife', tier: 1, gatherSpeed: 0.08, gatherLuck: 0.05, basePrice: 50 },
+  hunter_knife: { key: 'hunter_knife', name: 'Охотничий нож', type: 'tool', tool: 'knife', tier: 2, gatherSpeed: 0.16, gatherLuck: 0.10, basePrice: 150 },
+  butcher_knife: { key: 'butcher_knife', name: 'Разделочный нож', type: 'tool', tool: 'knife', tier: 3, gatherSpeed: 0.28, gatherLuck: 0.16, basePrice: 480 },
+  hand_sickle: { key: 'hand_sickle', name: 'Ручной серп', type: 'tool', tool: 'sickle', tier: 1, gatherSpeed: 0.08, gatherLuck: 0.05, basePrice: 50 },
+  iron_sickle: { key: 'iron_sickle', name: 'Железный серп', type: 'tool', tool: 'sickle', tier: 2, gatherSpeed: 0.16, gatherLuck: 0.10, basePrice: 150 },
+  moon_sickle: { key: 'moon_sickle', name: 'Лунный серп', type: 'tool', tool: 'sickle', tier: 3, gatherSpeed: 0.28, gatherLuck: 0.16, basePrice: 480 },
 
+  // Consumables
   small_potion: { key: 'small_potion', name: 'Малая лечебная настойка', type: 'consumable', heal: 30, basePrice: 40 },
   mid_potion: { key: 'mid_potion', name: 'Средняя лечебная настойка', type: 'consumable', heal: 70, basePrice: 110 },
   big_potion: { key: 'big_potion', name: 'Большая лечебная настойка', type: 'consumable', heal: 140, basePrice: 240 },
 
+  // Resources & materials & junk as before
   ore: { key: 'ore', name: 'Руда', type: 'resource', basePrice: 14 },
   wood: { key: 'wood', name: 'Дерево', type: 'resource', basePrice: 10 },
   fish: { key: 'fish', name: 'Рыба', type: 'resource', basePrice: 9 },
@@ -83,7 +88,25 @@ const ITEMS = {
   storm_essence: { key: 'storm_essence', name: 'Сущность грозы', type: 'junk', basePrice: 14 },
 };
 
-const CATALOG = Object.fromEntries(Object.values(ITEMS).map(i => [i.key, { key: i.key, name: i.name, type: i.type }]));
+// Expand catalog for tooltips
+const CATALOG = Object.fromEntries(Object.values(ITEMS).map(i => [
+  i.key,
+  {
+    key: i.key,
+    name: i.name,
+    type: i.type,
+    atk: i.atk || 0,
+    def: i.def || 0,
+    heal: i.heal || 0,
+    tier: i.tier || 0,
+    gatherSpeed: i.gatherSpeed || 0,
+    gatherLuck: i.gatherLuck || 0,
+    critChance: i.critChance || 0,
+    critMult: i.critMult || 0,
+    attackSpeed: i.attackSpeed || 0,
+    dmgReduction: i.dmgReduction || 0,
+  }
+]));
 
 // Crafting recipes
 const RECIPES = [
@@ -266,6 +289,10 @@ function playerDefense(player) {
   const base = 1 + Math.floor(player.level / 5);
   return base + (armor?.def || 0);
 }
+function armorDamageReduction(player) {
+  const armor = player.equipment.armor ? ITEMS[player.equipment.armor] : null;
+  return clamp(armor?.dmgReduction || 0, 0, 0.4);
+}
 
 function healCost(player) {
   const missing = Math.max(0, player.maxHp - player.hp);
@@ -290,10 +317,11 @@ function randomMobForLocation(locKey, level) {
 function calculateGatherChance(player, toolType, skillKey) {
   const slot = toolType;
   const key = player.equipment[slot];
-  const tier = key ? (ITEMS[key].tier || 0) : 0;
+  const tool = key ? ITEMS[key] : null;
+  const tier = tool ? (tool.tier || 0) : 0;
   const skillLvl = player.skills[skillKey]?.level || 1;
-  let chance = 0.25 + tier * 0.15 + (skillLvl - 1) * 0.05;
-  return clamp(chance, 0.2, 0.95);
+  let chance = 0.25 + tier * 0.15 + (skillLvl - 1) * 0.05 + (tool?.gatherLuck || 0);
+  return clamp(chance, 0.2, 0.97);
 }
 
 // Economy
@@ -456,24 +484,27 @@ function handleMessage(player, msg) {
     case 'attack': {
       if (!player.encounter) { addLog(player, 'Некого атаковать.'); break; }
       if (isBusy(player)) { addLog(player, `Вы заняты: ${player.busyAction}.`); pushState(player); break; }
-      beginBusy(player, 350, 'Атака', () => {
+      const weapon = player.equipment.weapon ? ITEMS[player.equipment.weapon] : null;
+      const baseMs = 350;
+      const atkMs = Math.max(180, Math.floor(baseMs * (1 - (weapon?.attackSpeed || 0))));
+      beginBusy(player, atkMs, 'Атака', () => {
         const atk = playerAttackPower(player);
-        const dmg = randInt(Math.max(1, Math.floor(atk * 0.7)), Math.floor(atk * 1.1));
+        let dmg = randInt(Math.max(1, Math.floor(atk * 0.7)), Math.floor(atk * 1.1));
+        const isCrit = Math.random() < (weapon?.critChance || 0);
+        if (isCrit) dmg = Math.floor(dmg * (weapon?.critMult || 1.5));
         player.encounter.hp -= dmg;
-        addLog(player, `Вы ударили по ${player.encounter.name} на ${dmg}.`);
+        addLog(player, `Вы ударили по ${player.encounter.name} на ${dmg}${isCrit ? ' (крит!)' : ''}.`);
         if (player.encounter.hp <= 0) {
           const g = randInt(Math.floor(player.encounter.gold * 0.8), player.encounter.gold);
           player.gold += g;
           grantXp(player, player.encounter.xp);
           for (const d of player.encounter.dropTable) {
             if (chance(d.chance)) {
-              const qty = randInt(d.min, d.max);
-              if (canAddToInventory(player, d.itemKey)) {
-                addItem(player.inventory, d.itemKey, qty);
-                addLog(player, `Добыча: ${ITEMS[d.itemKey].name} x${qty}.`);
-              } else {
-                addLog(player, `Нет места для ${ITEMS[d.itemKey].name}.`);
-              }
+              let qty = randInt(d.min, d.max);
+              // small bonus yield on victory based on level
+              if (Math.random() < Math.min(0.2, player.level * 0.005)) qty += 1;
+              if (canAddToInventory(player, d.itemKey)) { addItem(player.inventory, d.itemKey, qty); addLog(player, `Добыча: ${ITEMS[d.itemKey].name} x${qty}.`); }
+              else { addLog(player, `Нет места для ${ITEMS[d.itemKey].name}.`); }
             }
           }
           addLog(player, `Победа! Золото +${g}, опыт +${player.encounter.xp}.`);
@@ -485,7 +516,9 @@ function handleMessage(player, msg) {
         const enemyAtk = player.encounter.atk;
         const edmgBase = randInt(Math.max(1, Math.floor(enemyAtk * 0.7)), Math.floor(enemyAtk * 1.1));
         const red = Math.floor(def * 0.5);
-        const edmg = Math.max(1, edmgBase - red);
+        let edmg = Math.max(1, edmgBase - red);
+        const dr = armorDamageReduction(player);
+        edmg = Math.max(1, Math.floor(edmg * (1 - dr)));
         player.hp -= edmg;
         addLog(player, `${player.encounter.name} бьёт вас на ${edmg}.`);
         if (player.hp <= 0) {
@@ -619,10 +652,20 @@ function handleMessage(player, msg) {
       const map = { mine: ['ore', 'pickaxe', 'mining'], chop: ['wood', 'axe', 'woodcutting'], fish: ['fish', 'rod', 'fishing'], forage: ['herb', 'sickle', 'herbalism'], hunt: ['hide', 'knife', 'hunting'] };
       const pair = map[msg.which]; if (!pair) { addLog(player, 'Неизвестный тип добычи.'); break; }
       const [resKey, toolSlot, skillKey] = pair;
-      beginBusy(player, 1200, 'Добыча', () => {
+      const toolKey = player.equipment[toolSlot];
+      const tool = toolKey ? ITEMS[toolKey] : null;
+      const skillLvl = player.skills[skillKey]?.level || 1;
+      const baseMs = 1200;
+      const skillSpeed = Math.min(0.5, (skillLvl - 1) * 0.02);
+      const toolSpeed = tool?.gatherSpeed || 0;
+      const ms = Math.max(500, Math.floor(baseMs * (1 - toolSpeed) * (1 - skillSpeed)));
+      beginBusy(player, ms, 'Добыча', () => {
         const p = calculateGatherChance(player, toolSlot, skillKey);
         if (chance(p)) {
-          const qty = randInt(1, 3);
+          let qty = randInt(1, 3);
+          // Extra yield chance with tool luck and skill
+          const extraChance = (tool?.gatherLuck || 0) + Math.min(0.25, (skillLvl - 1) * 0.01);
+          if (Math.random() < extraChance) qty += 1;
           if (canAddToInventory(player, resKey) || player.inventory[resKey]) { addItem(player.inventory, resKey, qty); addLog(player, `Успех! Добыто ${ITEMS[resKey].name} x${qty}.`); addSkillXp(player, skillKey, 16); }
           else { addLog(player, `Нет места для ${ITEMS[resKey].name}.`); }
         } else {

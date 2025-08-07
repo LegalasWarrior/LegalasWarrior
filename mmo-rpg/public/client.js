@@ -70,13 +70,19 @@ function isBusy() {
   return Date.now() < (state.you.busy?.until || 0);
 }
 
+function busyPill() {
+  const you = state?.you; if (!you) return '';
+  if (!isBusy()) return '';
+  const remain = Math.max(0, Math.ceil((you.busy.until - Date.now())/1000));
+  return `<span class="pill">⏳ ${you.busy.action || 'Занято'} · ${remain}s</span>`;
+}
+
 function renderAll() {
   if (!state) return;
   const { you, meta } = state;
 
-  // Topbar
   const loc = meta.locations.find(l => l.key === you.location);
-  locName.textContent = loc ? loc.name : '—';
+  locName.innerHTML = (loc ? loc.name : '—') + ' ' + busyPill();
   topActions.innerHTML = '';
   for (const l of meta.locations) {
     const btn = document.createElement('button');
@@ -120,7 +126,8 @@ function renderAll() {
   const entries = Object.entries(you.skills || {});
   for (const [k, s] of entries) {
     const row = document.createElement('div'); row.className = 'list';
-    row.innerHTML = `<div>${skillName(k)}</div><div class="badge">ур. ${s.level}</div>`;
+    const tip = skillTooltip(k, s);
+    row.innerHTML = `<div class="tooltip">${skillName(k)}<div class="tip">${tip}</div></div><div class="badge">ур. ${s.level}</div>`;
     skillsBox.appendChild(row);
   }
 
@@ -176,9 +183,9 @@ function ensureSearchButton(locType, you) {
 }
 
 function renderInvRow(k, cnt, where, meta) {
-  const item = itemData(k);
+  const data = state.meta.catalog[k] || { name: k };
   const row = document.createElement('div'); row.className = 'list';
-  row.innerHTML = `<div>${item.name}</div><div class="badge">x${cnt}</div>`;
+  row.innerHTML = `<div class="tooltip">${data.name}<div class="tip">${itemTooltip(k, data)}</div></div><div class="badge">x${cnt}</div>`;
   const box = document.createElement('div'); box.className = 'row';
   const itType = meta.catalog[k]?.type;
 
@@ -278,3 +285,26 @@ function skillName(k) {
   return map[k] || k;
 }
 function levelThreshold(level) { return 100 + (level - 1) * 80 + Math.floor((level - 1) * (level - 1) * 12); }
+
+function itemTooltip(key, data) {
+  const parts = [];
+  if (data.type === 'weapon') parts.push(`Атака: +${data.atk}`, `Крит: ${(data.critChance*100).toFixed(0)}% ×${data.critMult}`, `Скорость атаки: +${Math.round((data.attackSpeed||0)*100)}%`);
+  if (data.type === 'armor') parts.push(`Защита: +${data.def}`, `Снижение урона: ${(data.dmgReduction*100).toFixed(0)}%`);
+  if (data.type === 'tool') parts.push(`Тир инструмента: ${data.tier}`, `Скорость добычи: +${Math.round((data.gatherSpeed||0)*100)}%`, `Удача добычи: +${Math.round((data.gatherLuck||0)*100)}%`);
+  if (data.type === 'consumable' && data.heal) parts.push(`Лечение: +${data.heal} HP`);
+  if (parts.length === 0) parts.push(`Тип: ${typeName(data.type)}`);
+  return parts.join('<br/>');
+}
+
+function skillTooltip(key, s) {
+  // Describe impacts
+  const map = {
+    mining: ['Добыча руды', 'Скорость повышается на 2% за уровень', 'Шанс успеха растёт на 5% от базового за уровень'],
+    woodcutting: ['Рубка дерева', 'Скорость +2%/ур.', 'Шанс успеха +5%/ур. (от базы)'],
+    fishing: ['Рыболовство', 'Скорость +2%/ур.', 'Шанс доп. улова +1%/ур.'],
+    herbalism: ['Сбор трав', 'Скорость +2%/ур.', 'Шанс успеха +5%/ур. (от базы)'],
+    hunting: ['Охота', 'Скорость +2%/ур.', 'Шанс успеха +5%/ур. (от базы)'],
+  };
+  const info = map[key] || ['Навык', 'Влияет на скорость и шанс добычи'];
+  return `${info[0]}<br/>${info[1]}<br/>${info[2] || ''}`;
+}

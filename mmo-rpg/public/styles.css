@@ -23,3 +23,7 @@ button:disabled { opacity: 0.6; cursor: not-allowed; }
 .badge { display: inline-block; background: #21262d; border: 1px solid #30363d; padding: 2px 6px; border-radius: 6px; font-size: 12px; color: #aab7c4; }
 .small { font-size: 12px; opacity: 0.85; }
 hr { border: none; border-top: 1px solid #30363d; margin: 8px 0; }
+.tooltip { position: relative; cursor: help; border-bottom: 1px dotted #6e7681; }
+.tooltip .tip { visibility: hidden; opacity: 0; transition: opacity .15s; position: absolute; z-index: 20; bottom: 125%; left: 0; background: #0a1220; border: 1px solid #1f2630; border-radius: 8px; padding: 8px; color: #c9d1d9; min-width: 220px; box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+.tooltip:hover .tip { visibility: visible; opacity: 1; }
+.pill { display: inline-block; padding: 2px 8px; border-radius: 999px; background: #21262d; border: 1px solid #30363d; font-size: 12px; color: #aab7c4; }
