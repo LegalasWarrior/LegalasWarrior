@@ -1,7 +1,7 @@
 import express from 'express';
 import http from 'http';
 import { WebSocketServer } from 'ws';
-import { nanoid } from 'nanoid';
+import { randomUUID } from 'crypto';
 
 // Text RPG Server
 const app = express();
@@ -344,7 +344,7 @@ function sanitizePlayer(p) {
 }
 
 wss.on('connection', (ws) => {
-  const id = nanoid(10);
+  const id = randomUUID();
   sockets.set(id, ws);
   const player = makePlayer(id);
   // Starter items
