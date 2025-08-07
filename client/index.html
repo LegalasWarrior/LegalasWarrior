@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Эларион — текстовая RPG</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="app">
+    <header>
+      <h1>Эларион</h1>
+      <div class="status">
+        <span id="mode">Офлайн</span>
+        <button id="connectBtn">Подключиться</button>
+      </div>
+    </header>
+    <main id="main"></main>
+    <aside id="sidebar">
+      <section id="char"></section>
+      <section id="chat">
+        <div id="chat-log"></div>
+        <div class="chat-input">
+          <input id="chat-text" placeholder="Сообщение в мир..." />
+          <button id="chat-send">➡</button>
+        </div>
+      </section>
+    </aside>
+    <footer>
+      <small>Прототип. Локальные сохранения. v0.1</small>
+    </footer>
+  </div>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

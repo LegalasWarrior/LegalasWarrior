@@ -1,0 +1,18 @@
+:root { color-scheme: dark light; --bg:#0d0f12; --fg:#e5e7eb; --muted:#9ca3af; --accent:#ef4444; --panel:#111827; }
+*{ box-sizing: border-box; }
+body{ margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica Neue, Arial, "Apple Color Emoji", "Segoe UI Emoji"; background:var(--bg); color:var(--fg); }
+#app{ display:grid; grid-template-columns: 2fr 1fr; grid-template-rows: auto 1fr auto; gap:12px; padding:12px; min-height:100vh; }
+header, footer{ grid-column:1 / -1; display:flex; align-items:center; justify-content:space-between; background:var(--panel); padding:8px 12px; border-radius:8px; }
+#main{ background:var(--panel); padding:12px; border-radius:8px; white-space:pre-wrap; line-height:1.5; }
+#sidebar{ display:flex; flex-direction:column; gap:12px; }
+#char{ background:var(--panel); padding:12px; border-radius:8px; min-height:120px; }
+#chat{ background:var(--panel); padding:12px; border-radius:8px; display:flex; flex-direction:column; height:400px; }
+#chat-log{ flex:1; overflow:auto; border:1px solid #1f2937; padding:8px; border-radius:6px; background:#0b1220; }
+.chat-input{ display:flex; gap:8px; margin-top:8px; }
+input, button{ background:#111827; color:var(--fg); border:1px solid #1f2937; padding:6px 8px; border-radius:6px; }
+button{ cursor:pointer; }
+.muted{ color:var(--muted); }
+.choice{ display:block; margin:6px 0; color:#93c5fd; cursor:pointer; }
+.choice:hover{ text-decoration:underline; }
+.badge{ display:inline-block; padding:2px 6px; border:1px solid #374151; border-radius:999px; font-size:12px; margin-right:6px; }
+.stat{ margin-right:8px; }
